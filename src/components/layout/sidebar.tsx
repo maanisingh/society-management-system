@@ -37,6 +37,12 @@ const allMenuItems = [
     roles: ['admin', 'resident', 'guard'], // Available to all
   },
   {
+    title: 'My Unit',
+    icon: Home,
+    href: '/dashboard/my-unit',
+    roles: ['resident'], // Residents only - for their unit info
+  },
+  {
     title: 'Financial',
     icon: Wallet,
     href: '/dashboard/financial',
@@ -60,10 +66,21 @@ const allMenuItems = [
     ],
   },
   {
+    title: 'Community',
+    icon: Users,
+    href: '/dashboard/residents',
+    roles: ['resident'], // Residents only - renamed from "Residents"
+    submenu: [
+      { title: 'Amenities', icon: Calendar, href: '/dashboard/residents/amenities' },
+      { title: 'Events', icon: Calendar, href: '/dashboard/residents/events' },
+      { title: 'Notices', icon: Bell, href: '/dashboard/residents/notices' },
+    ],
+  },
+  {
     title: 'Residents',
     icon: Users,
     href: '/dashboard/residents',
-    roles: ['admin', 'resident'], // Admin and Residents
+    roles: ['admin'], // Admin only
     submenu: [
       { title: 'Directory', icon: Users, href: '/dashboard/residents/directory' },
       { title: 'Amenities', icon: Calendar, href: '/dashboard/residents/amenities' },
@@ -135,7 +152,13 @@ export function Sidebar() {
               </div>
               <div>
                 <h2 className="text-lg font-bold text-gray-900">Society Hub</h2>
-                <p className="text-xs text-gray-500">Admin Panel</p>
+                <p className="text-xs text-gray-500">
+                  {user?.role === 'admin'
+                    ? 'Admin Panel'
+                    : user?.role === 'guard'
+                    ? 'Security Portal'
+                    : 'Resident Portal'}
+                </p>
               </div>
             </motion.div>
           )}

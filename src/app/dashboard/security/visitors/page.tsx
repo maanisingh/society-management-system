@@ -2,6 +2,8 @@
 
 import { useState } from 'react'
 import { motion } from 'framer-motion'
+import { RoleGuard } from '@/components/auth/role-guard'
+import { useAuthStore } from '@/lib/stores/auth-store'
 import {
   Plus,
   Search,
@@ -139,6 +141,9 @@ const visitors = [
 
 export default function VisitorsPage() {
   const [searchQuery, setSearchQuery] = useState('')
+  const { user } = useAuthStore()
+  const isAdmin = user?.role === 'admin'
+  const isGuard = user?.role === 'guard'
 
   const filteredVisitors = visitors.filter((visitor) => {
     return (
@@ -149,13 +154,18 @@ export default function VisitorsPage() {
   })
 
   return (
-    <div className="space-y-6">
+    <RoleGuard allowedRoles={['admin', 'guard']}>
+      <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Visitor Management</h1>
+          <h1 className="text-3xl font-bold text-gray-900">
+            {isAdmin ? 'Visitor Management' : 'Visitor Check-In/Out'}
+          </h1>
           <p className="text-gray-600 mt-1">
-            Track and manage visitor entries and exits
+            {isAdmin
+              ? 'Track and manage visitor entries and exits'
+              : 'Register and manage visitors at the gate'}
           </p>
         </div>
         <div className="flex items-center space-x-3">
@@ -413,5 +423,6 @@ export default function VisitorsPage() {
         </Table>
       </Card>
     </div>
+    </RoleGuard>
   )
 }

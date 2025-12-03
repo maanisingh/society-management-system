@@ -2,6 +2,8 @@
 
 import { useState } from 'react'
 import { motion } from 'framer-motion'
+import { RoleGuard } from '@/components/auth/role-guard'
+import { useAuthStore } from '@/lib/stores/auth-store'
 import {
   Plus,
   Search,
@@ -147,8 +149,16 @@ export default function ComplaintsPage() {
   const [searchQuery, setSearchQuery] = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
   const [priorityFilter, setPriorityFilter] = useState('all')
+  const { user } = useAuthStore()
+  const isAdmin = user?.role === 'admin'
+  const isResident = user?.role === 'resident'
 
-  const filteredComplaints = complaints.filter((complaint) => {
+  // For residents, show only their complaints (mock: filter by unit)
+  const userComplaints = isResident
+    ? complaints.filter((c) => c.unit === user?.unit || c.reportedBy === user?.name)
+    : complaints
+
+  const filteredComplaints = userComplaints.filter((complaint) => {
     const matchesSearch =
       complaint.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       complaint.unit.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -161,16 +171,29 @@ export default function ComplaintsPage() {
     return matchesSearch && matchesStatus && matchesPriority
   })
 
+  // Customize stats based on role
+  const displayStats = isResident
+    ? [
+        { ...stats[0], title: 'My Open Complaints', value: '2' },
+        { ...stats[1], title: 'In Progress', value: '1' },
+        { ...stats[2], title: 'Resolved', value: '8' },
+        { ...stats[3], title: 'Avg. Resolution', value: '2.5 days' },
+      ]
+    : stats
+
   return (
-    <div className="space-y-6">
+    <RoleGuard allowedRoles={['admin', 'resident']}>
+      <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">
-            Complaints Management
+            {isAdmin ? 'Complaints Management' : 'My Complaints'}
           </h1>
           <p className="text-gray-600 mt-1">
-            Track and resolve resident complaints efficiently
+            {isAdmin
+              ? 'Track and resolve resident complaints efficiently'
+              : 'View and raise complaints or maintenance requests'}
           </p>
         </div>
         <Dialog>
@@ -250,7 +273,7 @@ export default function ComplaintsPage() {
 
       {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {stats.map((stat, index) => {
+        {displayStats.map((stat, index) => {
           const Icon = stat.icon
           return (
             <motion.div
@@ -346,11 +369,11 @@ export default function ComplaintsPage() {
             <TableRow>
               <TableHead>Complaint ID</TableHead>
               <TableHead>Title</TableHead>
-              <TableHead>Unit</TableHead>
+              {isAdmin && <TableHead>Unit</TableHead>}
               <TableHead>Category</TableHead>
               <TableHead>Priority</TableHead>
               <TableHead>Status</TableHead>
-              <TableHead>Assigned To</TableHead>
+              {isAdmin && <TableHead>Assigned To</TableHead>}
               <TableHead>Actions</TableHead>
             </TableRow>
           </TableHeader>
@@ -372,14 +395,16 @@ export default function ComplaintsPage() {
                     )}
                   </div>
                 </TableCell>
-                <TableCell>
-                  <div>
-                    <p className="font-medium">{complaint.unit}</p>
-                    <p className="text-xs text-gray-500">
-                      {complaint.reportedBy}
-                    </p>
-                  </div>
-                </TableCell>
+                {isAdmin && (
+                  <TableCell>
+                    <div>
+                      <p className="font-medium">{complaint.unit}</p>
+                      <p className="text-xs text-gray-500">
+                        {complaint.reportedBy}
+                      </p>
+                    </div>
+                  </TableCell>
+                )}
                 <TableCell>
                   <Badge variant="outline" className="capitalize">
                     {complaint.category}
@@ -421,17 +446,19 @@ export default function ComplaintsPage() {
                     {complaint.status.replace('_', ' ')}
                   </Badge>
                 </TableCell>
-                <TableCell>
-                  {complaint.assignedTo || (
-                    <span className="text-gray-400">Unassigned</span>
-                  )}
-                </TableCell>
+                {isAdmin && (
+                  <TableCell>
+                    {complaint.assignedTo || (
+                      <span className="text-gray-400">Unassigned</span>
+                    )}
+                  </TableCell>
+                )}
                 <TableCell>
                   <div className="flex items-center space-x-2">
                     <Button variant="outline" size="sm">
                       View
                     </Button>
-                    {complaint.status !== 'resolved' && (
+                    {isAdmin && complaint.status !== 'resolved' && (
                       <Button
                         variant="outline"
                         size="sm"
@@ -448,5 +475,6 @@ export default function ComplaintsPage() {
         </Table>
       </Card>
     </div>
+    </RoleGuard>
   )
 }

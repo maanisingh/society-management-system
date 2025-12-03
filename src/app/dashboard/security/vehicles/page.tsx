@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { motion } from 'framer-motion'
+import { RoleGuard } from '@/components/auth/role-guard'
 import {
   Plus,
   Search,
@@ -151,6 +152,8 @@ export default function VehiclesPage() {
   })
 
   return (
+    <RoleGuard allowedRoles={['admin', 'guard']}>
+
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
@@ -406,5 +409,6 @@ export default function VehiclesPage() {
         </Table>
       </Card>
     </div>
+    </RoleGuard>
   )
 }

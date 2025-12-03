@@ -2,6 +2,8 @@
 
 import { useState } from 'react'
 import { motion } from 'framer-motion'
+import { RoleGuard } from '@/components/auth/role-guard'
+import { useAuthStore } from '@/lib/stores/auth-store'
 import {
   Calendar,
   Clock,
@@ -131,17 +133,30 @@ const upcomingBookings = [
 
 export default function AmenitiesPage() {
   const [selectedAmenity, setSelectedAmenity] = useState<any>(null)
+  const { user } = useAuthStore()
+  const isAdmin = user?.role === 'admin'
 
   return (
-    <div className="space-y-6">
+    <RoleGuard allowedRoles={['admin', 'resident']}>
+      <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Amenities Booking</h1>
+          <h1 className="text-3xl font-bold text-gray-900">
+            {isAdmin ? 'Amenities Management' : 'Amenities Booking'}
+          </h1>
           <p className="text-gray-600 mt-1">
-            Book facilities and amenities for your events
+            {isAdmin
+              ? 'Manage and monitor amenity bookings'
+              : 'Book facilities and amenities for your events'}
           </p>
         </div>
+        {isAdmin && (
+          <Button className="bg-gradient-to-r from-blue-600 to-purple-600 text-white">
+            <Plus className="h-4 w-4 mr-2" />
+            Add Amenity
+          </Button>
+        )}
       </div>
 
       {/* My Bookings */}
@@ -337,5 +352,6 @@ export default function AmenitiesPage() {
         </div>
       </div>
     </div>
+    </RoleGuard>
   )
 }

@@ -30,31 +30,41 @@ export function Header() {
 
   return (
     <header className="h-16 border-b border-gray-200 bg-white sticky top-0 z-40 backdrop-blur-sm bg-white/95">
-      <div className="h-full px-6 flex items-center justify-between">
+      <div className="h-full px-4 md:px-6 flex items-center justify-between">
         {/* Left Section - Search */}
-        <div className="flex items-center space-x-4 flex-1">
-          <Button variant="ghost" size="icon" className="lg:hidden">
-            <Menu className="h-5 w-5" />
-          </Button>
+        <div className="flex items-center space-x-2 md:space-x-4 flex-1">
+          {/* Logo/Title on mobile */}
+          <div className="md:hidden flex items-center space-x-2">
+            <div className="p-1.5 bg-gradient-to-br from-blue-600 to-purple-600 rounded-lg">
+              <Menu className="h-5 w-5 text-white" />
+            </div>
+            <h2 className="text-lg font-bold text-gray-900">Society</h2>
+          </div>
 
-          <div className="relative max-w-md w-full">
+          {/* Search - Hidden on small mobile, visible on tablet+ */}
+          <div className="relative max-w-md w-full hidden sm:block">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
             <Input
               type="search"
-              placeholder="Search residents, complaints, invoices..."
+              placeholder="Search..."
               className="pl-10 bg-gray-50 border-gray-200 focus:bg-white"
             />
           </div>
+
+          {/* Search icon only on mobile */}
+          <Button variant="ghost" size="icon" className="sm:hidden rounded-full">
+            <Search className="h-5 w-5" />
+          </Button>
         </div>
 
         {/* Right Section - Actions */}
-        <div className="flex items-center space-x-2">
-          {/* Theme Toggle */}
+        <div className="flex items-center space-x-1 md:space-x-2">
+          {/* Theme Toggle - Hidden on mobile */}
           <Button
             variant="ghost"
             size="icon"
             onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-            className="rounded-full"
+            className="rounded-full hidden md:flex"
           >
             {theme === 'dark' ? (
               <Sun className="h-5 w-5" />
@@ -63,8 +73,8 @@ export function Header() {
             )}
           </Button>
 
-          {/* Messages */}
-          <Button variant="ghost" size="icon" className="rounded-full relative">
+          {/* Messages - Hidden on mobile */}
+          <Button variant="ghost" size="icon" className="rounded-full relative hidden md:flex">
             <MessageSquare className="h-5 w-5" />
             <span className="absolute top-1 right-1 w-2 h-2 bg-blue-500 rounded-full" />
           </Button>
@@ -143,8 +153,8 @@ export function Header() {
             </DropdownMenuContent>
           </DropdownMenu>
 
-          {/* Settings */}
-          <Button variant="ghost" size="icon" className="rounded-full">
+          {/* Settings - Hidden on mobile */}
+          <Button variant="ghost" size="icon" className="rounded-full hidden md:flex">
             <Settings className="h-5 w-5" />
           </Button>
         </div>
