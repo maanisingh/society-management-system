@@ -398,7 +398,12 @@ export default function VehiclesPage() {
                 </TableCell>
                 <TableCell>
                   <div className="flex items-center space-x-2">
-                    <Button variant="ghost" size="icon" title="View Details">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      title="View Details"
+                      onClick={() => alert(`Vehicle Details:\n\nID: ${vehicle.id}\nNumber: ${vehicle.vehicleNumber}\nType: ${vehicle.type}\nMake: ${vehicle.make}\nColor: ${vehicle.color}\nOwner: ${vehicle.owner}\nUnit: ${vehicle.unit}\nParking: ${vehicle.parkingSlot}\nStatus: ${vehicle.status}\nRegistered: ${vehicle.registeredDate}`)}
+                    >
                       <Eye className="h-4 w-4" />
                     </Button>
                   </div>

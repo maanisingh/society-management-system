@@ -14,11 +14,28 @@ import {
   Calendar,
   Users,
   TrendingUp,
+  MessageSquare,
+  Phone,
+  Mail,
+  MoreHorizontal,
+  CheckCircle,
+  Clock,
+  AlertTriangle,
+  FileText,
+  Printer,
+  Share2,
+  ChevronRight,
+  Sparkles,
+  Building2,
+  Receipt,
+  CreditCard,
+  Banknote,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Card } from '@/components/ui/card'
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import {
   Table,
   TableBody,
@@ -34,38 +51,52 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
+  DialogFooter,
 } from '@/components/ui/dialog'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Checkbox } from '@/components/ui/checkbox'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 
 const stats = [
   {
     title: 'Total Billed',
     value: '₹12,45,000',
-    change: '+12%',
-    icon: DollarSign,
-    color: 'blue',
+    change: '+12% from last month',
+    icon: Receipt,
+    gradient: 'from-blue-500 to-blue-600',
+    bgGradient: 'from-blue-50 to-blue-100',
   },
   {
     title: 'Collected',
     value: '₹10,85,000',
-    change: '+8%',
-    icon: TrendingUp,
-    color: 'green',
+    change: '87% collection rate',
+    icon: Banknote,
+    gradient: 'from-green-500 to-emerald-600',
+    bgGradient: 'from-green-50 to-emerald-100',
   },
   {
     title: 'Pending',
     value: '₹1,60,000',
-    change: '-5%',
-    icon: Calendar,
-    color: 'orange',
+    change: '24 invoices pending',
+    icon: Clock,
+    gradient: 'from-orange-500 to-amber-500',
+    bgGradient: 'from-orange-50 to-amber-100',
   },
   {
-    title: 'Active Members',
-    value: '248',
-    change: '+3',
-    icon: Users,
-    color: 'purple',
+    title: 'Overdue',
+    value: '₹45,000',
+    change: '8 invoices overdue',
+    icon: AlertTriangle,
+    gradient: 'from-red-500 to-rose-500',
+    bgGradient: 'from-red-50 to-rose-100',
   },
 ]
 
@@ -73,300 +104,667 @@ const invoices = [
   {
     id: 'INV-2025-001',
     unit: 'A-101',
+    block: 'A',
     resident: 'Rajesh Kumar',
+    phone: '+91 98765 43210',
     amount: 15000,
+    maintenance: 12000,
+    utilities: 3000,
+    penalty: 0,
     dueDate: '2025-01-05',
     status: 'paid',
     paidDate: '2025-01-03',
+    paymentMode: 'UPI',
   },
   {
     id: 'INV-2025-002',
     unit: 'B-205',
+    block: 'B',
     resident: 'Priya Sharma',
+    phone: '+91 98765 43211',
     amount: 18500,
+    maintenance: 12000,
+    utilities: 5500,
+    penalty: 1000,
     dueDate: '2025-01-05',
     status: 'paid',
     paidDate: '2025-01-04',
+    paymentMode: 'Net Banking',
   },
   {
     id: 'INV-2025-003',
     unit: 'C-304',
+    block: 'C',
     resident: 'Amit Patel',
+    phone: '+91 98765 43212',
     amount: 16200,
+    maintenance: 12000,
+    utilities: 4200,
+    penalty: 0,
     dueDate: '2025-01-05',
     status: 'pending',
     paidDate: null,
+    paymentMode: null,
   },
   {
     id: 'INV-2025-004',
     unit: 'A-502',
+    block: 'A',
     resident: 'Neha Gupta',
-    amount: 22000,
+    phone: '+91 98765 43213',
+    amount: 24500,
+    maintenance: 12000,
+    utilities: 4500,
+    penalty: 8000,
     dueDate: '2024-12-20',
     status: 'overdue',
     paidDate: null,
+    paymentMode: null,
   },
   {
     id: 'INV-2025-005',
     unit: 'D-108',
+    block: 'D',
     resident: 'Vikram Singh',
+    phone: '+91 98765 43214',
     amount: 14500,
+    maintenance: 12000,
+    utilities: 2500,
+    penalty: 0,
     dueDate: '2025-01-05',
     status: 'pending',
     paidDate: null,
+    paymentMode: null,
+  },
+  {
+    id: 'INV-2025-006',
+    unit: 'B-301',
+    block: 'B',
+    resident: 'Sunita Verma',
+    phone: '+91 98765 43215',
+    amount: 19000,
+    maintenance: 12000,
+    utilities: 7000,
+    penalty: 0,
+    dueDate: '2025-01-05',
+    status: 'pending',
+    paidDate: null,
+    paymentMode: null,
   },
 ]
+
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: { opacity: 1, transition: { staggerChildren: 0.08 } },
+}
+
+const itemVariants = {
+  hidden: { y: 20, opacity: 0 },
+  visible: { y: 0, opacity: 1 },
+}
+
+function SendWhatsAppButton({ invoice }: { invoice: typeof invoices[0] }) {
+  const message = `Dear ${invoice.resident},
+
+Your maintenance bill for ${invoice.unit} is ${invoice.status === 'overdue' ? 'OVERDUE' : 'due'}.
+
+Invoice: ${invoice.id}
+Amount: ₹${invoice.amount.toLocaleString()}
+Due Date: ${invoice.dueDate}
+${invoice.penalty > 0 ? `Penalty: ₹${invoice.penalty.toLocaleString()}` : ''}
+
+Please pay at your earliest convenience to avoid additional penalties.
+
+Thank you,
+SocietyHub Management`
+
+  const whatsappUrl = `https://wa.me/${invoice.phone.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(message)}`
+
+  return (
+    <Button
+      variant="ghost"
+      size="icon"
+      className="h-8 w-8 text-green-600 hover:text-green-700 hover:bg-green-50"
+      onClick={() => window.open(whatsappUrl, '_blank')}
+      title="Send via WhatsApp"
+    >
+      <MessageSquare className="h-4 w-4" />
+    </Button>
+  )
+}
 
 export default function BillingPage() {
   const [searchQuery, setSearchQuery] = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
+  const [blockFilter, setBlockFilter] = useState('all')
+  const [selectedInvoices, setSelectedInvoices] = useState<string[]>([])
+  const [viewInvoice, setViewInvoice] = useState<typeof invoices[0] | null>(null)
 
   const filteredInvoices = invoices.filter((invoice) => {
     const matchesSearch =
       invoice.unit.toLowerCase().includes(searchQuery.toLowerCase()) ||
       invoice.resident.toLowerCase().includes(searchQuery.toLowerCase()) ||
       invoice.id.toLowerCase().includes(searchQuery.toLowerCase())
-
     const matchesStatus = statusFilter === 'all' || invoice.status === statusFilter
-
-    return matchesSearch && matchesStatus
+    const matchesBlock = blockFilter === 'all' || invoice.block === blockFilter
+    return matchesSearch && matchesStatus && matchesBlock
   })
+
+  const toggleSelect = (id: string) => {
+    setSelectedInvoices(prev =>
+      prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
+    )
+  }
+
+  const selectAll = () => {
+    if (selectedInvoices.length === filteredInvoices.length) {
+      setSelectedInvoices([])
+    } else {
+      setSelectedInvoices(filteredInvoices.map(i => i.id))
+    }
+  }
 
   return (
     <RoleGuard allowedRoles={['admin']}>
-
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Billing Management</h1>
-          <p className="text-gray-600 mt-1">
-            Manage invoices, track payments, and generate bills
-          </p>
-        </div>
-        <div className="flex items-center space-x-3">
-          <Button variant="outline" className="space-x-2">
-            <Download className="h-4 w-4" />
-            <span>Export</span>
-          </Button>
-          <Dialog>
-            <DialogTrigger asChild>
-              <Button className="bg-gradient-to-r from-blue-600 to-purple-600 text-white space-x-2">
-                <Plus className="h-4 w-4" />
-                <span>Generate Bills</span>
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-2xl">
-              <DialogHeader>
-                <DialogTitle>Generate Monthly Bills</DialogTitle>
-                <DialogDescription>
-                  Create and send invoices to all or selected units
-                </DialogDescription>
-              </DialogHeader>
-              <div className="space-y-4 py-4">
-                <div className="space-y-2">
-                  <Label>Billing Month</Label>
-                  <Select>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select month" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="jan-2025">January 2025</SelectItem>
-                      <SelectItem value="dec-2024">December 2024</SelectItem>
-                      <SelectItem value="nov-2024">November 2024</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label>Bill Type</Label>
-                  <Select>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select type" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="maintenance">Maintenance</SelectItem>
-                      <SelectItem value="utility">Utility</SelectItem>
-                      <SelectItem value="both">Both</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label>Units</Label>
-                  <Select>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select units" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All Units</SelectItem>
-                      <SelectItem value="block-a">Block A</SelectItem>
-                      <SelectItem value="block-b">Block B</SelectItem>
-                      <SelectItem value="custom">Custom Selection</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="flex items-center justify-between pt-4 border-t">
-                  <div>
-                    <p className="text-sm text-gray-600">Total Units: 248</p>
-                    <p className="text-sm text-gray-600">
-                      Estimated Amount: ₹37,20,000
-                    </p>
+      <motion.div
+        variants={containerVariants}
+        initial="hidden"
+        animate="visible"
+        className="space-y-6 p-1"
+      >
+        {/* Header */}
+        <motion.div variants={itemVariants} className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div>
+            <div className="flex items-center gap-2 mb-1">
+              <h1 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-gray-900 to-gray-600 bg-clip-text text-transparent">
+                Billing Management
+              </h1>
+            </div>
+            <p className="text-gray-500">
+              Generate invoices, track payments, and send reminders
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm">
+              <Download className="h-4 w-4 mr-2" />
+              Export
+            </Button>
+            <Dialog>
+              <DialogTrigger asChild>
+                <Button className="bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg shadow-blue-500/25">
+                  <Sparkles className="h-4 w-4 mr-2" />
+                  Generate Bills
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-2xl">
+                <DialogHeader>
+                  <DialogTitle className="flex items-center gap-2">
+                    <FileText className="h-5 w-5 text-blue-500" />
+                    Generate Monthly Bills
+                  </DialogTitle>
+                  <DialogDescription>
+                    Auto-generate and send invoices to all or selected units
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="space-y-4 py-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label>Billing Month</Label>
+                      <Select defaultValue="jan-2025">
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select month" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="jan-2025">January 2025</SelectItem>
+                          <SelectItem value="dec-2024">December 2024</SelectItem>
+                          <SelectItem value="nov-2024">November 2024</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Due Date</Label>
+                      <Input type="date" defaultValue="2025-01-15" />
+                    </div>
                   </div>
-                  <Button className="bg-blue-600 hover:bg-blue-700">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label>Bill Type</Label>
+                      <Select defaultValue="both">
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select type" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="maintenance">Maintenance Only</SelectItem>
+                          <SelectItem value="utility">Utility Only</SelectItem>
+                          <SelectItem value="both">Maintenance + Utility</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Select Block</Label>
+                      <Select defaultValue="all">
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select block" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">All Blocks</SelectItem>
+                          <SelectItem value="A">Block A</SelectItem>
+                          <SelectItem value="B">Block B</SelectItem>
+                          <SelectItem value="C">Block C</SelectItem>
+                          <SelectItem value="D">Block D</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Apply Late Fee (After Due Date)</Label>
+                    <div className="grid grid-cols-3 gap-4">
+                      <Input type="number" placeholder="Amount" defaultValue="500" />
+                      <Select defaultValue="fixed">
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="fixed">Fixed Amount</SelectItem>
+                          <SelectItem value="percent">Percentage</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <Select defaultValue="monthly">
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="once">One Time</SelectItem>
+                          <SelectItem value="monthly">Per Month</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                  <div className="flex items-center space-x-2 pt-2">
+                    <Checkbox id="send-whatsapp" defaultChecked />
+                    <Label htmlFor="send-whatsapp" className="text-sm">
+                      Send invoice via WhatsApp
+                    </Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Checkbox id="send-email" defaultChecked />
+                    <Label htmlFor="send-email" className="text-sm">
+                      Send invoice via Email
+                    </Label>
+                  </div>
+                  <div className="p-4 rounded-lg bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-100">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium text-gray-900">Summary</p>
+                        <p className="text-xs text-gray-500 mt-1">180 units × ₹12,000 avg</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-2xl font-bold text-blue-600">₹21,60,000</p>
+                        <p className="text-xs text-gray-500">Estimated Total</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <DialogFooter>
+                  <Button variant="outline">Preview Bills</Button>
+                  <Button className="bg-gradient-to-r from-blue-600 to-purple-600 text-white">
+                    <Send className="h-4 w-4 mr-2" />
                     Generate & Send
                   </Button>
-                </div>
-              </div>
-            </DialogContent>
-          </Dialog>
-        </div>
-      </div>
-
-      {/* Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {stats.map((stat, index) => {
-          const Icon = stat.icon
-          return (
-            <motion.div
-              key={index}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.1 }}
-            >
-              <Card className="p-6 hover:shadow-lg transition-shadow">
-                <div className="flex items-start justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-gray-600">
-                      {stat.title}
-                    </p>
-                    <h3 className="text-2xl font-bold text-gray-900 mt-2">
-                      {stat.value}
-                    </h3>
-                    <p className="text-sm text-green-600 mt-1">{stat.change}</p>
-                  </div>
-                  <div
-                    className={`p-3 rounded-xl ${
-                      stat.color === 'blue'
-                        ? 'bg-blue-100'
-                        : stat.color === 'green'
-                        ? 'bg-green-100'
-                        : stat.color === 'orange'
-                        ? 'bg-orange-100'
-                        : 'bg-purple-100'
-                    }`}
-                  >
-                    <Icon
-                      className={`h-6 w-6 ${
-                        stat.color === 'blue'
-                          ? 'text-blue-600'
-                          : stat.color === 'green'
-                          ? 'text-green-600'
-                          : stat.color === 'orange'
-                          ? 'text-orange-600'
-                          : 'text-purple-600'
-                      }`}
-                    />
-                  </div>
-                </div>
-              </Card>
-            </motion.div>
-          )
-        })}
-      </div>
-
-      {/* Filters */}
-      <Card className="p-4">
-        <div className="flex items-center space-x-4">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-            <Input
-              type="search"
-              placeholder="Search by unit, resident, or invoice number..."
-              className="pl-10"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
           </div>
-          <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="w-40">
-              <SelectValue placeholder="Status" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Status</SelectItem>
-              <SelectItem value="paid">Paid</SelectItem>
-              <SelectItem value="pending">Pending</SelectItem>
-              <SelectItem value="overdue">Overdue</SelectItem>
-            </SelectContent>
-          </Select>
-          <Button variant="outline" className="space-x-2">
-            <Filter className="h-4 w-4" />
-            <span>More Filters</span>
-          </Button>
-        </div>
-      </Card>
+        </motion.div>
 
-      {/* Invoices Table */}
-      <Card>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Invoice ID</TableHead>
-              <TableHead>Unit</TableHead>
-              <TableHead>Resident</TableHead>
-              <TableHead>Amount</TableHead>
-              <TableHead>Due Date</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {filteredInvoices.map((invoice) => (
-              <TableRow key={invoice.id}>
-                <TableCell className="font-medium">{invoice.id}</TableCell>
-                <TableCell>{invoice.unit}</TableCell>
-                <TableCell>{invoice.resident}</TableCell>
-                <TableCell className="font-semibold">
-                  ₹{invoice.amount.toLocaleString()}
-                </TableCell>
-                <TableCell>{invoice.dueDate}</TableCell>
-                <TableCell>
-                  <Badge
-                    variant={
-                      invoice.status === 'paid'
-                        ? 'default'
-                        : invoice.status === 'overdue'
-                        ? 'destructive'
-                        : 'secondary'
-                    }
-                    className={
-                      invoice.status === 'paid'
-                        ? 'bg-green-100 text-green-700 hover:bg-green-100'
-                        : invoice.status === 'overdue'
-                        ? 'bg-red-100 text-red-700 hover:bg-red-100'
-                        : 'bg-orange-100 text-orange-700 hover:bg-orange-100'
-                    }
-                  >
-                    {invoice.status}
-                  </Badge>
-                </TableCell>
-                <TableCell>
-                  <div className="flex items-center space-x-2">
-                    <Button variant="ghost" size="icon" title="View">
-                      <Eye className="h-4 w-4" />
+        {/* Stats */}
+        <motion.div variants={containerVariants} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {stats.map((stat, index) => {
+            const Icon = stat.icon
+            return (
+              <motion.div key={index} variants={itemVariants}>
+                <Card className="relative overflow-hidden border-0 shadow-md hover:shadow-xl transition-all duration-300 group">
+                  <div className={`absolute inset-0 bg-gradient-to-br ${stat.bgGradient} opacity-50`} />
+                  <CardContent className="p-5 relative">
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <p className="text-sm font-medium text-gray-600 mb-1">{stat.title}</p>
+                        <h3 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-1">{stat.value}</h3>
+                        <p className="text-xs text-gray-500">{stat.change}</p>
+                      </div>
+                      <div className={`p-3 rounded-xl bg-gradient-to-br ${stat.gradient} shadow-lg group-hover:scale-110 transition-transform`}>
+                        <Icon className="h-5 w-5 text-white" />
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            )
+          })}
+        </motion.div>
+
+        {/* Tabs */}
+        <motion.div variants={itemVariants}>
+          <Tabs defaultValue="invoices" className="space-y-4">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+              <TabsList className="bg-gray-100">
+                <TabsTrigger value="invoices">All Invoices</TabsTrigger>
+                <TabsTrigger value="pending">Pending</TabsTrigger>
+                <TabsTrigger value="overdue">Overdue</TabsTrigger>
+              </TabsList>
+
+              {/* Filters */}
+              <div className="flex items-center gap-2 flex-wrap">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                  <Input
+                    type="search"
+                    placeholder="Search..."
+                    className="pl-10 w-48"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                  />
+                </div>
+                <Select value={statusFilter} onValueChange={setStatusFilter}>
+                  <SelectTrigger className="w-32">
+                    <SelectValue placeholder="Status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Status</SelectItem>
+                    <SelectItem value="paid">Paid</SelectItem>
+                    <SelectItem value="pending">Pending</SelectItem>
+                    <SelectItem value="overdue">Overdue</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Select value={blockFilter} onValueChange={setBlockFilter}>
+                  <SelectTrigger className="w-32">
+                    <SelectValue placeholder="Block" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Blocks</SelectItem>
+                    <SelectItem value="A">Block A</SelectItem>
+                    <SelectItem value="B">Block B</SelectItem>
+                    <SelectItem value="C">Block C</SelectItem>
+                    <SelectItem value="D">Block D</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <TabsContent value="invoices" className="space-y-4">
+              {/* Bulk Actions */}
+              {selectedInvoices.length > 0 && (
+                <div className="flex items-center gap-2 p-3 bg-blue-50 rounded-lg border border-blue-100">
+                  <span className="text-sm font-medium text-blue-700">
+                    {selectedInvoices.length} selected
+                  </span>
+                  <div className="flex-1" />
+                  <Button size="sm" variant="outline" className="text-green-600 border-green-200 hover:bg-green-50">
+                    <MessageSquare className="h-4 w-4 mr-1" />
+                    WhatsApp All
+                  </Button>
+                  <Button size="sm" variant="outline" className="text-blue-600 border-blue-200 hover:bg-blue-50">
+                    <Mail className="h-4 w-4 mr-1" />
+                    Email All
+                  </Button>
+                  <Button size="sm" variant="outline">
+                    <Download className="h-4 w-4 mr-1" />
+                    Download PDF
+                  </Button>
+                </div>
+              )}
+
+              {/* Invoices Table */}
+              <Card className="border-0 shadow-md overflow-hidden">
+                <Table>
+                  <TableHeader>
+                    <TableRow className="bg-gray-50">
+                      <TableHead className="w-12">
+                        <Checkbox
+                          checked={selectedInvoices.length === filteredInvoices.length && filteredInvoices.length > 0}
+                          onCheckedChange={selectAll}
+                        />
+                      </TableHead>
+                      <TableHead>Invoice</TableHead>
+                      <TableHead>Unit / Resident</TableHead>
+                      <TableHead className="text-right">Amount</TableHead>
+                      <TableHead>Due Date</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredInvoices.map((invoice) => (
+                      <TableRow key={invoice.id} className="hover:bg-gray-50">
+                        <TableCell>
+                          <Checkbox
+                            checked={selectedInvoices.includes(invoice.id)}
+                            onCheckedChange={() => toggleSelect(invoice.id)}
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            <div className={`h-8 w-8 rounded-lg flex items-center justify-center ${
+                              invoice.status === 'paid' ? 'bg-green-100' :
+                              invoice.status === 'overdue' ? 'bg-red-100' : 'bg-orange-100'
+                            }`}>
+                              <Receipt className={`h-4 w-4 ${
+                                invoice.status === 'paid' ? 'text-green-600' :
+                                invoice.status === 'overdue' ? 'text-red-600' : 'text-orange-600'
+                              }`} />
+                            </div>
+                            <span className="font-medium text-sm">{invoice.id}</span>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <Badge variant="outline" className="text-xs">{invoice.unit}</Badge>
+                              <span className="font-medium text-sm">{invoice.resident}</span>
+                            </div>
+                            <span className="text-xs text-gray-500">{invoice.phone}</span>
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <div>
+                            <span className="font-bold">₹{invoice.amount.toLocaleString()}</span>
+                            {invoice.penalty > 0 && (
+                              <p className="text-xs text-red-500">+₹{invoice.penalty} penalty</p>
+                            )}
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <span className="text-sm">{invoice.dueDate}</span>
+                        </TableCell>
+                        <TableCell>
+                          <Badge
+                            className={
+                              invoice.status === 'paid'
+                                ? 'bg-green-100 text-green-700 hover:bg-green-100'
+                                : invoice.status === 'overdue'
+                                ? 'bg-red-100 text-red-700 hover:bg-red-100'
+                                : 'bg-orange-100 text-orange-700 hover:bg-orange-100'
+                            }
+                          >
+                            {invoice.status === 'paid' && <CheckCircle className="h-3 w-3 mr-1" />}
+                            {invoice.status === 'pending' && <Clock className="h-3 w-3 mr-1" />}
+                            {invoice.status === 'overdue' && <AlertTriangle className="h-3 w-3 mr-1" />}
+                            {invoice.status}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex items-center justify-end gap-1">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8"
+                              onClick={() => setViewInvoice(invoice)}
+                            >
+                              <Eye className="h-4 w-4" />
+                            </Button>
+                            <SendWhatsAppButton invoice={invoice} />
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="icon" className="h-8 w-8">
+                                  <MoreHorizontal className="h-4 w-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                <DropdownMenuItem onClick={() => setViewInvoice(invoice)}>
+                                  <Eye className="h-4 w-4 mr-2" />
+                                  View Details
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => {
+                                  window.location.href = `mailto:${invoice.resident.toLowerCase().replace(' ', '.')}@email.com?subject=Invoice ${invoice.id}&body=Dear ${invoice.resident},%0D%0A%0D%0APlease find your invoice ${invoice.id} for amount ₹${invoice.amount.toLocaleString()}.%0D%0A%0D%0AThank you.`
+                                }}>
+                                  <Mail className="h-4 w-4 mr-2" />
+                                  Send Email
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => {
+                                  window.location.href = `tel:${invoice.phone.replace(/[^0-9]/g, '')}`
+                                }}>
+                                  <Phone className="h-4 w-4 mr-2" />
+                                  Call Resident
+                                </DropdownMenuItem>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem onClick={() => {
+                                  window.print()
+                                  alert(`Printing invoice ${invoice.id}...`)
+                                }}>
+                                  <Printer className="h-4 w-4 mr-2" />
+                                  Print Invoice
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => {
+                                  alert(`Downloading PDF for invoice ${invoice.id}...`)
+                                }}>
+                                  <Download className="h-4 w-4 mr-2" />
+                                  Download PDF
+                                </DropdownMenuItem>
+                                <DropdownMenuSeparator />
+                                {invoice.status !== 'paid' && (
+                                  <DropdownMenuItem className="text-green-600" onClick={() => {
+                                    alert(`Invoice ${invoice.id} marked as paid!`)
+                                  }}>
+                                    <CheckCircle className="h-4 w-4 mr-2" />
+                                    Mark as Paid
+                                  </DropdownMenuItem>
+                                )}
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="pending">
+              <Card className="p-8 text-center border-0 shadow-md">
+                <Clock className="h-12 w-12 mx-auto text-orange-400 mb-4" />
+                <h3 className="text-lg font-semibold mb-2">Pending Invoices</h3>
+                <p className="text-gray-500 mb-4">View and manage all pending invoices</p>
+                <Button variant="outline">
+                  View Pending <ChevronRight className="h-4 w-4 ml-1" />
+                </Button>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="overdue">
+              <Card className="p-8 text-center border-0 shadow-md">
+                <AlertTriangle className="h-12 w-12 mx-auto text-red-400 mb-4" />
+                <h3 className="text-lg font-semibold mb-2">Overdue Invoices</h3>
+                <p className="text-gray-500 mb-4">Take action on overdue payments</p>
+                <Button variant="outline">
+                  View Overdue <ChevronRight className="h-4 w-4 ml-1" />
+                </Button>
+              </Card>
+            </TabsContent>
+          </Tabs>
+        </motion.div>
+
+        {/* Invoice Detail Dialog */}
+        <Dialog open={!!viewInvoice} onOpenChange={() => setViewInvoice(null)}>
+          <DialogContent className="max-w-lg">
+            {viewInvoice && (
+              <>
+                <DialogHeader>
+                  <DialogTitle className="flex items-center justify-between">
+                    <span>Invoice {viewInvoice.id}</span>
+                    <Badge
+                      className={
+                        viewInvoice.status === 'paid'
+                          ? 'bg-green-100 text-green-700'
+                          : viewInvoice.status === 'overdue'
+                          ? 'bg-red-100 text-red-700'
+                          : 'bg-orange-100 text-orange-700'
+                      }
+                    >
+                      {viewInvoice.status}
+                    </Badge>
+                  </DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4">
+                  <div className="p-4 bg-gray-50 rounded-lg">
+                    <div className="flex items-center gap-3 mb-3">
+                      <Avatar>
+                        <AvatarFallback className="bg-blue-100 text-blue-700">
+                          {viewInvoice.resident.split(' ').map(n => n[0]).join('')}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div>
+                        <p className="font-semibold">{viewInvoice.resident}</p>
+                        <p className="text-sm text-gray-500">Unit {viewInvoice.unit} • Block {viewInvoice.block}</p>
+                      </div>
+                    </div>
+                    <p className="text-sm text-gray-500">{viewInvoice.phone}</p>
+                  </div>
+
+                  <div className="space-y-2">
+                    <div className="flex justify-between py-2 border-b">
+                      <span className="text-gray-500">Maintenance Charges</span>
+                      <span className="font-medium">₹{viewInvoice.maintenance.toLocaleString()}</span>
+                    </div>
+                    <div className="flex justify-between py-2 border-b">
+                      <span className="text-gray-500">Utility Charges</span>
+                      <span className="font-medium">₹{viewInvoice.utilities.toLocaleString()}</span>
+                    </div>
+                    {viewInvoice.penalty > 0 && (
+                      <div className="flex justify-between py-2 border-b text-red-600">
+                        <span>Late Fee / Penalty</span>
+                        <span className="font-medium">₹{viewInvoice.penalty.toLocaleString()}</span>
+                      </div>
+                    )}
+                    <div className="flex justify-between py-3 text-lg font-bold">
+                      <span>Total Amount</span>
+                      <span>₹{viewInvoice.amount.toLocaleString()}</span>
+                    </div>
+                  </div>
+
+                  <div className="flex gap-2">
+                    <Button className="flex-1" variant="outline" onClick={() => {
+                      const message = `Invoice ${viewInvoice.id} - Amount: ₹${viewInvoice.amount.toLocaleString()}`
+                      window.open(`https://wa.me/${viewInvoice.phone.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(message)}`, '_blank')
+                    }}>
+                      <MessageSquare className="h-4 w-4 mr-2" />
+                      WhatsApp
                     </Button>
-                    <Button variant="ghost" size="icon" title="Send Reminder">
-                      <Send className="h-4 w-4" />
+                    <Button className="flex-1" variant="outline">
+                      <Mail className="h-4 w-4 mr-2" />
+                      Email
                     </Button>
-                    <Button variant="ghost" size="icon" title="Download">
-                      <Download className="h-4 w-4" />
+                    <Button className="flex-1" variant="outline">
+                      <Download className="h-4 w-4 mr-2" />
+                      PDF
                     </Button>
                   </div>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </Card>
-    </div>
+                </div>
+              </>
+            )}
+          </DialogContent>
+        </Dialog>
+      </motion.div>
     </RoleGuard>
   )
 }

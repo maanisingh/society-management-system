@@ -397,11 +397,21 @@ export default function ParcelsPage() {
                 </TableCell>
                 <TableCell>
                   <div className="flex items-center space-x-2">
-                    <Button variant="ghost" size="icon" title="View Details">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      title="View Details"
+                      onClick={() => alert(`Parcel Details:\n\nID: ${parcel.id}\nTracking: ${parcel.trackingNumber}\nUnit: ${parcel.unit}\nResident: ${parcel.resident}\nCourier: ${parcel.courier}\nReceived: ${parcel.receivedDate} ${parcel.receivedTime}\nDescription: ${parcel.description}\nStatus: ${parcel.status}${parcel.collectedDate ? `\nCollected: ${parcel.collectedDate} ${parcel.collectedTime}` : ''}`)}
+                    >
                       <Eye className="h-4 w-4" />
                     </Button>
                     {parcel.status === 'pending' && (
-                      <Button variant="ghost" size="sm" className="text-green-600 hover:text-green-700">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="text-green-600 hover:text-green-700"
+                        onClick={() => alert(`Parcel ${parcel.id} marked as collected!\n\nResident ${parcel.resident} from ${parcel.unit} will be notified.`)}
+                      >
                         Mark Collected
                       </Button>
                     )}

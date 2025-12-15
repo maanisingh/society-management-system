@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 import { RoleGuard } from '@/components/auth/role-guard'
 import { useAuthStore } from '@/lib/stores/auth-store'
 import {
@@ -14,10 +14,30 @@ import {
   XCircle,
   MessageSquare,
   Image as ImageIcon,
+  Upload,
+  Camera,
+  Wrench,
+  Shield,
+  Volume2,
+  Sparkles,
+  ArrowUpRight,
+  Eye,
+  MoreHorizontal,
+  User,
+  MapPin,
+  Calendar,
+  Send,
+  AlertTriangle,
+  ChevronRight,
+  FileText,
+  Trash2,
+  Edit,
+  UserPlus,
+  History,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Card } from '@/components/ui/card'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import {
   Table,
@@ -45,6 +65,14 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 
 const stats = [
   {
@@ -52,108 +80,362 @@ const stats = [
     value: '23',
     change: '+3 from last week',
     icon: AlertCircle,
-    color: 'red',
+    color: 'from-red-500 to-rose-600',
+    bgColor: 'bg-red-50',
+    textColor: 'text-red-600',
+    pulse: true,
   },
   {
     title: 'In Progress',
     value: '15',
     change: 'Being resolved',
     icon: Clock,
-    color: 'orange',
+    color: 'from-orange-500 to-amber-600',
+    bgColor: 'bg-orange-50',
+    textColor: 'text-orange-600',
   },
   {
     title: 'Resolved This Month',
     value: '142',
-    change: '+18% from last month',
+    change: '+18% vs last month',
     icon: CheckCircle2,
-    color: 'green',
+    color: 'from-green-500 to-emerald-600',
+    bgColor: 'bg-green-50',
+    textColor: 'text-green-600',
+    trend: 'up',
   },
   {
-    title: 'Avg. Resolution Time',
+    title: 'Avg. Resolution',
     value: '2.3 days',
-    change: '-0.5 days',
-    icon: Clock,
-    color: 'blue',
+    change: 'Improved by 0.5 days',
+    icon: History,
+    color: 'from-blue-500 to-indigo-600',
+    bgColor: 'bg-blue-50',
+    textColor: 'text-blue-600',
+    trend: 'up',
   },
 ]
+
+const categoryIcons: Record<string, React.ElementType> = {
+  maintenance: Wrench,
+  cleanliness: Sparkles,
+  security: Shield,
+  noise: Volume2,
+  other: AlertCircle,
+}
 
 const complaints = [
   {
     id: 'CMP-2025-001',
     title: 'Water Leakage in Bathroom',
-    description: 'Continuous water leakage from the ceiling of bathroom',
+    description: 'Continuous water leakage from the ceiling of bathroom. Water is dripping near the electrical switchboard which is a safety concern.',
     category: 'maintenance',
     priority: 'high',
     status: 'open',
     reportedBy: 'Rajesh Kumar',
     unit: 'A-101',
+    phone: '+91 98765 43210',
     createdAt: '2 hours ago',
+    date: '2025-01-12',
     assignedTo: null,
-    images: 2,
+    images: [
+      '/images/complaints/leak-1.jpg',
+      '/images/complaints/leak-2.jpg',
+    ],
+    timeline: [
+      { action: 'Complaint registered', time: '2 hours ago', user: 'Rajesh Kumar' },
+    ],
   },
   {
     id: 'CMP-2025-002',
     title: 'Lift Not Working - Block B',
-    description: 'Lift in Block B is stuck on 5th floor',
+    description: 'Lift in Block B is stuck on 5th floor. The display shows error code E-102. Elderly residents are facing difficulty.',
     category: 'maintenance',
     priority: 'urgent',
     status: 'in_progress',
     reportedBy: 'Priya Sharma',
     unit: 'B-205',
+    phone: '+91 98765 43211',
     createdAt: '5 hours ago',
+    date: '2025-01-12',
     assignedTo: 'Maintenance Team',
-    images: 1,
+    images: [
+      '/images/complaints/lift-1.jpg',
+    ],
+    timeline: [
+      { action: 'Complaint registered', time: '5 hours ago', user: 'Priya Sharma' },
+      { action: 'Assigned to Maintenance Team', time: '4 hours ago', user: 'Admin' },
+      { action: 'Technician dispatched', time: '3 hours ago', user: 'Maintenance Team' },
+    ],
   },
   {
     id: 'CMP-2025-003',
-    title: 'Noise Disturbance',
-    description: 'Loud music from neighboring unit after 11 PM',
+    title: 'Noise Disturbance from A-302',
+    description: 'Loud music and party noise from neighboring unit after 11 PM. This has happened multiple times in the past week.',
     category: 'noise',
     priority: 'medium',
     status: 'open',
     reportedBy: 'Amit Patel',
     unit: 'C-304',
+    phone: '+91 98765 43212',
     createdAt: '1 day ago',
+    date: '2025-01-11',
     assignedTo: null,
-    images: 0,
+    images: [],
+    timeline: [
+      { action: 'Complaint registered', time: '1 day ago', user: 'Amit Patel' },
+    ],
   },
   {
     id: 'CMP-2024-345',
     title: 'Garden Maintenance Required',
-    description: 'Plants need watering and trimming',
+    description: 'Plants in the common garden area need watering and trimming. Several plants appear to be dying.',
     category: 'cleanliness',
     priority: 'low',
     status: 'resolved',
     reportedBy: 'Neha Gupta',
     unit: 'A-502',
+    phone: '+91 98765 43213',
     createdAt: '3 days ago',
+    date: '2025-01-09',
     assignedTo: 'Gardening Team',
-    images: 3,
+    images: [
+      '/images/complaints/garden-1.jpg',
+      '/images/complaints/garden-2.jpg',
+      '/images/complaints/garden-3.jpg',
+    ],
+    resolvedAt: '1 day ago',
+    timeline: [
+      { action: 'Complaint registered', time: '3 days ago', user: 'Neha Gupta' },
+      { action: 'Assigned to Gardening Team', time: '3 days ago', user: 'Admin' },
+      { action: 'Work in progress', time: '2 days ago', user: 'Gardening Team' },
+      { action: 'Resolved', time: '1 day ago', user: 'Gardening Team' },
+    ],
   },
   {
     id: 'CMP-2024-344',
     title: 'Security Camera Not Working',
-    description: 'Camera near gate 2 is offline',
+    description: 'Camera near gate 2 is offline. This is a security concern as it covers the main entry point.',
     category: 'security',
     priority: 'high',
     status: 'in_progress',
     reportedBy: 'Vikram Singh',
     unit: 'D-108',
+    phone: '+91 98765 43214',
     createdAt: '4 days ago',
+    date: '2025-01-08',
     assignedTo: 'Security Team',
-    images: 0,
+    images: [],
+    timeline: [
+      { action: 'Complaint registered', time: '4 days ago', user: 'Vikram Singh' },
+      { action: 'Assigned to Security Team', time: '4 days ago', user: 'Admin' },
+      { action: 'Vendor contacted for replacement', time: '2 days ago', user: 'Security Team' },
+    ],
   },
 ]
 
+const categories = [
+  { value: 'maintenance', label: 'Maintenance', icon: Wrench },
+  { value: 'cleanliness', label: 'Cleanliness', icon: Sparkles },
+  { value: 'security', label: 'Security', icon: Shield },
+  { value: 'noise', label: 'Noise', icon: Volume2 },
+  { value: 'other', label: 'Other', icon: AlertCircle },
+]
+
+function ComplaintDetailDialog({ complaint }: { complaint: typeof complaints[0] }) {
+  const CategoryIcon = categoryIcons[complaint.category] || AlertCircle
+
+  return (
+    <Dialog>
+      <DialogTrigger asChild>
+        <Button variant="ghost" size="icon" className="h-8 w-8">
+          <Eye className="h-4 w-4" />
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <div className="flex items-start justify-between">
+            <div>
+              <DialogTitle className="flex items-center gap-2 text-lg">
+                <span className="text-muted-foreground font-normal">{complaint.id}</span>
+              </DialogTitle>
+              <h3 className="text-xl font-semibold mt-1">{complaint.title}</h3>
+            </div>
+            <div className="flex items-center gap-2">
+              <Badge
+                className={`${
+                  complaint.priority === 'urgent'
+                    ? 'bg-red-100 text-red-700'
+                    : complaint.priority === 'high'
+                    ? 'bg-orange-100 text-orange-700'
+                    : complaint.priority === 'medium'
+                    ? 'bg-yellow-100 text-yellow-700'
+                    : 'bg-gray-100 text-gray-700'
+                }`}
+              >
+                {complaint.priority === 'urgent' && <AlertTriangle className="h-3 w-3 mr-1" />}
+                {complaint.priority}
+              </Badge>
+              <Badge
+                className={`${
+                  complaint.status === 'resolved'
+                    ? 'bg-green-100 text-green-700'
+                    : complaint.status === 'in_progress'
+                    ? 'bg-blue-100 text-blue-700'
+                    : 'bg-gray-100 text-gray-700'
+                }`}
+              >
+                {complaint.status.replace('_', ' ')}
+              </Badge>
+            </div>
+          </div>
+        </DialogHeader>
+
+        <div className="space-y-6 py-4">
+          {/* Complaint Info */}
+          <div className="grid grid-cols-2 gap-4">
+            <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
+              <Avatar className="h-10 w-10">
+                <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-600 text-white">
+                  {complaint.reportedBy.charAt(0)}
+                </AvatarFallback>
+              </Avatar>
+              <div>
+                <p className="text-xs text-muted-foreground">Reported By</p>
+                <p className="font-medium">{complaint.reportedBy}</p>
+                <p className="text-xs text-muted-foreground">{complaint.unit}</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
+              <div className={`p-2 rounded-lg ${
+                complaint.category === 'maintenance' ? 'bg-blue-100' :
+                complaint.category === 'security' ? 'bg-red-100' :
+                complaint.category === 'noise' ? 'bg-orange-100' :
+                complaint.category === 'cleanliness' ? 'bg-green-100' : 'bg-gray-100'
+              }`}>
+                <CategoryIcon className={`h-5 w-5 ${
+                  complaint.category === 'maintenance' ? 'text-blue-600' :
+                  complaint.category === 'security' ? 'text-red-600' :
+                  complaint.category === 'noise' ? 'text-orange-600' :
+                  complaint.category === 'cleanliness' ? 'text-green-600' : 'text-gray-600'
+                }`} />
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground">Category</p>
+                <p className="font-medium capitalize">{complaint.category}</p>
+                <p className="text-xs text-muted-foreground">{complaint.createdAt}</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Description */}
+          <div className="space-y-2">
+            <h4 className="font-medium">Description</h4>
+            <p className="text-sm text-muted-foreground bg-muted/50 p-4 rounded-lg">
+              {complaint.description}
+            </p>
+          </div>
+
+          {/* Images */}
+          {complaint.images.length > 0 && (
+            <div className="space-y-2">
+              <h4 className="font-medium flex items-center gap-2">
+                <ImageIcon className="h-4 w-4" />
+                Attached Photos ({complaint.images.length})
+              </h4>
+              <div className="grid grid-cols-3 gap-3">
+                {complaint.images.map((img, idx) => (
+                  <div
+                    key={idx}
+                    className="aspect-square rounded-lg bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center cursor-pointer hover:opacity-80 transition-opacity border"
+                  >
+                    <div className="text-center">
+                      <ImageIcon className="h-8 w-8 text-gray-400 mx-auto" />
+                      <p className="text-xs text-gray-500 mt-1">Photo {idx + 1}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Assigned To */}
+          {complaint.assignedTo && (
+            <div className="flex items-center gap-3 p-4 rounded-lg bg-blue-50 border border-blue-100">
+              <UserPlus className="h-5 w-5 text-blue-600" />
+              <div className="flex-1">
+                <p className="text-sm font-medium text-blue-900">Assigned To</p>
+                <p className="text-sm text-blue-700">{complaint.assignedTo}</p>
+              </div>
+            </div>
+          )}
+
+          {/* Timeline */}
+          <div className="space-y-2">
+            <h4 className="font-medium flex items-center gap-2">
+              <History className="h-4 w-4" />
+              Activity Timeline
+            </h4>
+            <div className="space-y-3 pl-2">
+              {complaint.timeline.map((event, idx) => (
+                <div key={idx} className="flex gap-3">
+                  <div className="flex flex-col items-center">
+                    <div className={`h-2 w-2 rounded-full ${idx === 0 ? 'bg-blue-500' : 'bg-gray-300'}`} />
+                    {idx < complaint.timeline.length - 1 && (
+                      <div className="w-0.5 h-full bg-gray-200 mt-1" />
+                    )}
+                  </div>
+                  <div className="flex-1 pb-3">
+                    <p className="text-sm font-medium">{event.action}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {event.time} by {event.user}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Add Comment */}
+          <div className="space-y-2 pt-4 border-t">
+            <h4 className="font-medium">Add Comment</h4>
+            <div className="flex gap-2">
+              <Textarea placeholder="Type your comment..." className="flex-1" rows={2} />
+              <Button className="bg-blue-600 hover:bg-blue-700">
+                <Send className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+
+          {/* Actions */}
+          {complaint.status !== 'resolved' && (
+            <div className="flex gap-2 pt-4 border-t">
+              {!complaint.assignedTo && (
+                <Button variant="outline" className="flex-1 gap-2">
+                  <UserPlus className="h-4 w-4" />
+                  Assign
+                </Button>
+              )}
+              <Button className="flex-1 gap-2 bg-green-600 hover:bg-green-700">
+                <CheckCircle2 className="h-4 w-4" />
+                Mark as Resolved
+              </Button>
+            </div>
+          )}
+        </div>
+      </DialogContent>
+    </Dialog>
+  )
+}
+
 export default function ComplaintsPage() {
   const [searchQuery, setSearchQuery] = useState('')
-  const [statusFilter, setStatusFilter] = useState('all')
-  const [priorityFilter, setPriorityFilter] = useState('all')
+  const [activeTab, setActiveTab] = useState('all')
+  const [categoryFilter, setCategoryFilter] = useState('all')
   const { user } = useAuthStore()
   const isAdmin = user?.role === 'admin'
   const isResident = user?.role === 'resident'
 
-  // For residents, show only their complaints (mock: filter by unit)
   const userComplaints = isResident
     ? complaints.filter((c) => c.unit === user?.unit || c.reportedBy === user?.name)
     : complaints
@@ -162,16 +444,26 @@ export default function ComplaintsPage() {
     const matchesSearch =
       complaint.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       complaint.unit.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      complaint.id.toLowerCase().includes(searchQuery.toLowerCase())
+      complaint.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      complaint.reportedBy.toLowerCase().includes(searchQuery.toLowerCase())
 
-    const matchesStatus = statusFilter === 'all' || complaint.status === statusFilter
-    const matchesPriority =
-      priorityFilter === 'all' || complaint.priority === priorityFilter
+    const matchesTab = activeTab === 'all' || complaint.status === activeTab
+    const matchesCategory = categoryFilter === 'all' || complaint.category === categoryFilter
 
-    return matchesSearch && matchesStatus && matchesPriority
+    return matchesSearch && matchesTab && matchesCategory
   })
 
-  // Customize stats based on role
+  const getStatusCounts = () => {
+    return {
+      all: userComplaints.length,
+      open: userComplaints.filter((c) => c.status === 'open').length,
+      in_progress: userComplaints.filter((c) => c.status === 'in_progress').length,
+      resolved: userComplaints.filter((c) => c.status === 'resolved').length,
+    }
+  }
+
+  const counts = getStatusCounts()
+
   const displayStats = isResident
     ? [
         { ...stats[0], title: 'My Open Complaints', value: '2' },
@@ -184,297 +476,475 @@ export default function ComplaintsPage() {
   return (
     <RoleGuard allowedRoles={['admin', 'resident']}>
       <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">
-            {isAdmin ? 'Complaints Management' : 'My Complaints'}
-          </h1>
-          <p className="text-gray-600 mt-1">
-            {isAdmin
-              ? 'Track and resolve resident complaints efficiently'
-              : 'View and raise complaints or maintenance requests'}
-          </p>
-        </div>
-        <Dialog>
-          <DialogTrigger asChild>
-            <Button className="bg-gradient-to-r from-blue-600 to-purple-600 text-white space-x-2">
-              <Plus className="h-4 w-4" />
-              <span>New Complaint</span>
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-2xl">
-            <DialogHeader>
-              <DialogTitle>Register New Complaint</DialogTitle>
-              <DialogDescription>
-                Submit a new complaint or maintenance request
-              </DialogDescription>
-            </DialogHeader>
-            <div className="space-y-4 py-4">
-              <div className="space-y-2">
-                <Label>Complaint Title *</Label>
-                <Input placeholder="Brief title of the issue" />
+        {/* Header */}
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+          <div>
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-xl bg-gradient-to-br from-red-500 to-orange-600">
+                <AlertCircle className="h-6 w-6 text-white" />
               </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label>Category *</Label>
-                  <Select>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select category" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="maintenance">Maintenance</SelectItem>
-                      <SelectItem value="cleanliness">Cleanliness</SelectItem>
-                      <SelectItem value="security">Security</SelectItem>
-                      <SelectItem value="noise">Noise</SelectItem>
-                      <SelectItem value="other">Other</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label>Priority *</Label>
-                  <Select>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select priority" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="low">Low</SelectItem>
-                      <SelectItem value="medium">Medium</SelectItem>
-                      <SelectItem value="high">High</SelectItem>
-                      <SelectItem value="urgent">Urgent</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-              <div className="space-y-2">
-                <Label>Detailed Description *</Label>
-                <Textarea
-                  placeholder="Describe the issue in detail..."
-                  rows={4}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Attach Images (Optional)</Label>
-                <Button variant="outline" className="w-full space-x-2">
-                  <ImageIcon className="h-4 w-4" />
-                  <span>Upload Images</span>
-                </Button>
-              </div>
-              <div className="flex items-center justify-end space-x-3 pt-4 border-t">
-                <Button variant="outline">Cancel</Button>
-                <Button className="bg-blue-600 hover:bg-blue-700">
-                  Submit Complaint
-                </Button>
+              <div>
+                <h1 className="text-2xl font-bold bg-gradient-to-r from-gray-900 to-gray-600 bg-clip-text text-transparent">
+                  {isAdmin ? 'Complaints Management' : 'My Complaints'}
+                </h1>
+                <p className="text-muted-foreground text-sm">
+                  {isAdmin
+                    ? 'Track and resolve resident complaints efficiently'
+                    : 'View and raise complaints or maintenance requests'}
+                </p>
               </div>
             </div>
-          </DialogContent>
-        </Dialog>
-      </div>
+          </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {displayStats.map((stat, index) => {
-          const Icon = stat.icon
-          return (
-            <motion.div
-              key={index}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.1 }}
-            >
-              <Card className="p-6 hover:shadow-lg transition-shadow">
-                <div className="flex items-start justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-gray-600">
-                      {stat.title}
-                    </p>
-                    <h3 className="text-2xl font-bold text-gray-900 mt-2">
-                      {stat.value}
-                    </h3>
-                    <p className="text-sm text-gray-500 mt-1">{stat.change}</p>
+          <Dialog>
+            <DialogTrigger asChild>
+              <Button className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white gap-2 shadow-lg shadow-blue-500/25">
+                <Plus className="h-4 w-4" />
+                <span>New Complaint</span>
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-2xl">
+              <DialogHeader>
+                <DialogTitle className="flex items-center gap-2">
+                  <AlertCircle className="h-5 w-5 text-red-600" />
+                  Register New Complaint
+                </DialogTitle>
+                <DialogDescription>
+                  Submit a new complaint or maintenance request. Attach photos for faster resolution.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="space-y-4 py-4">
+                <div className="space-y-2">
+                  <Label>Complaint Title *</Label>
+                  <Input placeholder="Brief title describing the issue" />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>Category *</Label>
+                    <Select>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select category" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {categories.map((cat) => {
+                          const Icon = cat.icon
+                          return (
+                            <SelectItem key={cat.value} value={cat.value}>
+                              <div className="flex items-center gap-2">
+                                <Icon className="h-4 w-4" />
+                                {cat.label}
+                              </div>
+                            </SelectItem>
+                          )
+                        })}
+                      </SelectContent>
+                    </Select>
                   </div>
-                  <div
-                    className={`p-3 rounded-xl ${
-                      stat.color === 'red'
-                        ? 'bg-red-100'
-                        : stat.color === 'orange'
-                        ? 'bg-orange-100'
-                        : stat.color === 'green'
-                        ? 'bg-green-100'
-                        : 'bg-blue-100'
-                    }`}
-                  >
-                    <Icon
-                      className={`h-6 w-6 ${
-                        stat.color === 'red'
-                          ? 'text-red-600'
-                          : stat.color === 'orange'
-                          ? 'text-orange-600'
-                          : stat.color === 'green'
-                          ? 'text-green-600'
-                          : 'text-blue-600'
-                      }`}
-                    />
+                  <div className="space-y-2">
+                    <Label>Priority *</Label>
+                    <Select>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select priority" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="low">
+                          <div className="flex items-center gap-2">
+                            <span className="h-2 w-2 rounded-full bg-gray-400" />
+                            Low
+                          </div>
+                        </SelectItem>
+                        <SelectItem value="medium">
+                          <div className="flex items-center gap-2">
+                            <span className="h-2 w-2 rounded-full bg-yellow-400" />
+                            Medium
+                          </div>
+                        </SelectItem>
+                        <SelectItem value="high">
+                          <div className="flex items-center gap-2">
+                            <span className="h-2 w-2 rounded-full bg-orange-400" />
+                            High
+                          </div>
+                        </SelectItem>
+                        <SelectItem value="urgent">
+                          <div className="flex items-center gap-2">
+                            <span className="h-2 w-2 rounded-full bg-red-500 animate-pulse" />
+                            Urgent
+                          </div>
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
                 </div>
-              </Card>
-            </motion.div>
-          )
-        })}
-      </div>
 
-      {/* Filters */}
-      <Card className="p-4">
-        <div className="flex items-center space-x-4">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-            <Input
-              type="search"
-              placeholder="Search complaints..."
-              className="pl-10"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-          </div>
-          <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="w-40">
-              <SelectValue placeholder="Status" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Status</SelectItem>
-              <SelectItem value="open">Open</SelectItem>
-              <SelectItem value="in_progress">In Progress</SelectItem>
-              <SelectItem value="resolved">Resolved</SelectItem>
-            </SelectContent>
-          </Select>
-          <Select value={priorityFilter} onValueChange={setPriorityFilter}>
-            <SelectTrigger className="w-40">
-              <SelectValue placeholder="Priority" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Priority</SelectItem>
-              <SelectItem value="urgent">Urgent</SelectItem>
-              <SelectItem value="high">High</SelectItem>
-              <SelectItem value="medium">Medium</SelectItem>
-              <SelectItem value="low">Low</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-      </Card>
+                <div className="space-y-2">
+                  <Label>Location / Unit</Label>
+                  <Input placeholder="e.g., A-101, Common Area, Parking Lot B" />
+                </div>
 
-      {/* Complaints Table */}
-      <Card>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Complaint ID</TableHead>
-              <TableHead>Title</TableHead>
-              {isAdmin && <TableHead>Unit</TableHead>}
-              <TableHead>Category</TableHead>
-              <TableHead>Priority</TableHead>
-              <TableHead>Status</TableHead>
-              {isAdmin && <TableHead>Assigned To</TableHead>}
-              <TableHead>Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {filteredComplaints.map((complaint) => (
-              <TableRow key={complaint.id}>
-                <TableCell className="font-medium">{complaint.id}</TableCell>
-                <TableCell>
-                  <div>
-                    <p className="font-medium">{complaint.title}</p>
-                    <p className="text-sm text-gray-500">
-                      {complaint.createdAt}
-                    </p>
-                    {complaint.images > 0 && (
-                      <Badge variant="outline" className="mt-1 text-xs">
-                        <ImageIcon className="h-3 w-3 mr-1" />
-                        {complaint.images} images
-                      </Badge>
-                    )}
-                  </div>
-                </TableCell>
-                {isAdmin && (
-                  <TableCell>
-                    <div>
-                      <p className="font-medium">{complaint.unit}</p>
-                      <p className="text-xs text-gray-500">
-                        {complaint.reportedBy}
-                      </p>
+                <div className="space-y-2">
+                  <Label>Detailed Description *</Label>
+                  <Textarea
+                    placeholder="Describe the issue in detail. Include what, where, when, and any other relevant information..."
+                    rows={4}
+                  />
+                </div>
+
+                {/* Photo Upload */}
+                <div className="space-y-2">
+                  <Label>Attach Photos</Label>
+                  <div className="grid grid-cols-4 gap-3">
+                    <div className="aspect-square rounded-lg border-2 border-dashed border-gray-200 hover:border-blue-400 hover:bg-blue-50 transition-colors cursor-pointer flex flex-col items-center justify-center gap-1">
+                      <Camera className="h-6 w-6 text-gray-400" />
+                      <span className="text-xs text-gray-500">Camera</span>
                     </div>
-                  </TableCell>
-                )}
-                <TableCell>
-                  <Badge variant="outline" className="capitalize">
-                    {complaint.category}
-                  </Badge>
-                </TableCell>
-                <TableCell>
-                  <Badge
-                    variant={
-                      complaint.priority === 'urgent'
-                        ? 'destructive'
-                        : 'secondary'
-                    }
-                    className={
-                      complaint.priority === 'urgent'
-                        ? 'bg-red-100 text-red-700'
-                        : complaint.priority === 'high'
-                        ? 'bg-orange-100 text-orange-700'
-                        : complaint.priority === 'medium'
-                        ? 'bg-yellow-100 text-yellow-700'
-                        : 'bg-gray-100 text-gray-700'
-                    }
-                  >
-                    {complaint.priority}
-                  </Badge>
-                </TableCell>
-                <TableCell>
-                  <Badge
-                    variant={
-                      complaint.status === 'resolved' ? 'default' : 'secondary'
-                    }
-                    className={
-                      complaint.status === 'resolved'
-                        ? 'bg-green-100 text-green-700'
-                        : complaint.status === 'in_progress'
-                        ? 'bg-blue-100 text-blue-700'
-                        : 'bg-gray-100 text-gray-700'
-                    }
-                  >
-                    {complaint.status.replace('_', ' ')}
-                  </Badge>
-                </TableCell>
-                {isAdmin && (
-                  <TableCell>
-                    {complaint.assignedTo || (
-                      <span className="text-gray-400">Unassigned</span>
-                    )}
-                  </TableCell>
-                )}
-                <TableCell>
-                  <div className="flex items-center space-x-2">
-                    <Button variant="outline" size="sm">
-                      View
-                    </Button>
-                    {isAdmin && complaint.status !== 'resolved' && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="text-green-600"
-                      >
-                        Resolve
-                      </Button>
-                    )}
+                    <div className="aspect-square rounded-lg border-2 border-dashed border-gray-200 hover:border-blue-400 hover:bg-blue-50 transition-colors cursor-pointer flex flex-col items-center justify-center gap-1">
+                      <Upload className="h-6 w-6 text-gray-400" />
+                      <span className="text-xs text-gray-500">Upload</span>
+                    </div>
+                    <div className="aspect-square rounded-lg bg-gray-100 flex items-center justify-center">
+                      <ImageIcon className="h-6 w-6 text-gray-400" />
+                    </div>
+                    <div className="aspect-square rounded-lg bg-gray-100 flex items-center justify-center">
+                      <ImageIcon className="h-6 w-6 text-gray-400" />
+                    </div>
                   </div>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </Card>
-    </div>
+                  <p className="text-xs text-muted-foreground">
+                    Photos help us understand and resolve issues faster. You can attach up to 4 images.
+                  </p>
+                </div>
+
+                <div className="flex items-center justify-end gap-3 pt-4 border-t">
+                  <Button variant="outline">Cancel</Button>
+                  <Button className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 gap-2">
+                    <Send className="h-4 w-4" />
+                    Submit Complaint
+                  </Button>
+                </div>
+              </div>
+            </DialogContent>
+          </Dialog>
+        </div>
+
+        {/* Stats */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          {displayStats.map((stat, index) => {
+            const Icon = stat.icon
+            return (
+              <motion.div
+                key={index}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.1 }}
+              >
+                <Card className="relative overflow-hidden border-0 shadow-lg hover:shadow-xl transition-all duration-300">
+                  <div className={`absolute inset-0 bg-gradient-to-br ${stat.color} opacity-5`} />
+                  <CardContent className="p-6">
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <p className="text-sm font-medium text-muted-foreground">
+                          {stat.title}
+                        </p>
+                        <h3 className="text-3xl font-bold mt-2 bg-gradient-to-r from-gray-900 to-gray-600 bg-clip-text text-transparent">
+                          {stat.value}
+                        </h3>
+                        <div className="flex items-center gap-1 mt-2">
+                          {stat.trend === 'up' && (
+                            <ArrowUpRight className="h-4 w-4 text-green-500" />
+                          )}
+                          <p className="text-sm text-muted-foreground">{stat.change}</p>
+                        </div>
+                      </div>
+                      <div className={`p-3 rounded-xl ${stat.bgColor} relative`}>
+                        {stat.pulse && (
+                          <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-red-500 animate-pulse" />
+                        )}
+                        <Icon className={`h-6 w-6 ${stat.textColor}`} />
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            )
+          })}
+        </div>
+
+        {/* Filters & Search */}
+        <Card className="border-0 shadow-lg">
+          <CardContent className="p-4">
+            <div className="flex flex-col lg:flex-row gap-4">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  type="search"
+                  placeholder="Search by ID, title, unit, or reporter..."
+                  className="pl-10"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
+              </div>
+              <div className="flex gap-2">
+                <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+                  <SelectTrigger className="w-[160px]">
+                    <Filter className="h-4 w-4 mr-2" />
+                    <SelectValue placeholder="Category" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Categories</SelectItem>
+                    {categories.map((cat) => (
+                      <SelectItem key={cat.value} value={cat.value}>
+                        {cat.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Select defaultValue="all">
+                  <SelectTrigger className="w-[140px]">
+                    <Calendar className="h-4 w-4 mr-2" />
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Time</SelectItem>
+                    <SelectItem value="today">Today</SelectItem>
+                    <SelectItem value="week">This Week</SelectItem>
+                    <SelectItem value="month">This Month</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Tabs & Table */}
+        <Card className="border-0 shadow-lg">
+          <Tabs value={activeTab} onValueChange={setActiveTab}>
+            <CardHeader className="border-b pb-0">
+              <TabsList className="bg-transparent h-auto p-0 space-x-6">
+                <TabsTrigger
+                  value="all"
+                  className="data-[state=active]:bg-transparent data-[state=active]:shadow-none border-b-2 border-transparent data-[state=active]:border-blue-600 rounded-none px-0 pb-3"
+                >
+                  All <Badge variant="secondary" className="ml-2">{counts.all}</Badge>
+                </TabsTrigger>
+                <TabsTrigger
+                  value="open"
+                  className="data-[state=active]:bg-transparent data-[state=active]:shadow-none border-b-2 border-transparent data-[state=active]:border-red-600 rounded-none px-0 pb-3"
+                >
+                  <span className="h-2 w-2 rounded-full bg-red-500 animate-pulse mr-2" />
+                  Open <Badge className="ml-2 bg-red-100 text-red-700">{counts.open}</Badge>
+                </TabsTrigger>
+                <TabsTrigger
+                  value="in_progress"
+                  className="data-[state=active]:bg-transparent data-[state=active]:shadow-none border-b-2 border-transparent data-[state=active]:border-orange-600 rounded-none px-0 pb-3"
+                >
+                  In Progress <Badge className="ml-2 bg-orange-100 text-orange-700">{counts.in_progress}</Badge>
+                </TabsTrigger>
+                <TabsTrigger
+                  value="resolved"
+                  className="data-[state=active]:bg-transparent data-[state=active]:shadow-none border-b-2 border-transparent data-[state=active]:border-green-600 rounded-none px-0 pb-3"
+                >
+                  Resolved <Badge className="ml-2 bg-green-100 text-green-700">{counts.resolved}</Badge>
+                </TabsTrigger>
+              </TabsList>
+            </CardHeader>
+            <CardContent className="p-0">
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-muted/50 hover:bg-muted/50">
+                    <TableHead className="font-semibold">Complaint</TableHead>
+                    {isAdmin && <TableHead className="font-semibold">Reporter</TableHead>}
+                    <TableHead className="font-semibold">Category</TableHead>
+                    <TableHead className="font-semibold">Priority</TableHead>
+                    <TableHead className="font-semibold">Status</TableHead>
+                    {isAdmin && <TableHead className="font-semibold">Assigned</TableHead>}
+                    <TableHead className="font-semibold text-right">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  <AnimatePresence>
+                    {filteredComplaints.map((complaint, index) => {
+                      const CategoryIcon = categoryIcons[complaint.category] || AlertCircle
+                      return (
+                        <motion.tr
+                          key={complaint.id}
+                          initial={{ opacity: 0, x: -20 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          exit={{ opacity: 0, x: 20 }}
+                          transition={{ delay: index * 0.05 }}
+                          className="group hover:bg-muted/50"
+                        >
+                          <TableCell>
+                            <div>
+                              <p className="text-xs text-muted-foreground">{complaint.id}</p>
+                              <p className="font-medium">{complaint.title}</p>
+                              <div className="flex items-center gap-2 mt-1">
+                                <span className="text-xs text-muted-foreground">{complaint.createdAt}</span>
+                                {complaint.images.length > 0 && (
+                                  <Badge variant="outline" className="text-xs gap-1">
+                                    <ImageIcon className="h-3 w-3" />
+                                    {complaint.images.length}
+                                  </Badge>
+                                )}
+                              </div>
+                            </div>
+                          </TableCell>
+                          {isAdmin && (
+                            <TableCell>
+                              <div className="flex items-center gap-2">
+                                <Avatar className="h-8 w-8">
+                                  <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-600 text-white text-xs">
+                                    {complaint.reportedBy.charAt(0)}
+                                  </AvatarFallback>
+                                </Avatar>
+                                <div>
+                                  <p className="font-medium text-sm">{complaint.reportedBy}</p>
+                                  <p className="text-xs text-muted-foreground">{complaint.unit}</p>
+                                </div>
+                              </div>
+                            </TableCell>
+                          )}
+                          <TableCell>
+                            <div className="flex items-center gap-2">
+                              <div className={`p-1.5 rounded-lg ${
+                                complaint.category === 'maintenance' ? 'bg-blue-100' :
+                                complaint.category === 'security' ? 'bg-red-100' :
+                                complaint.category === 'noise' ? 'bg-orange-100' :
+                                complaint.category === 'cleanliness' ? 'bg-green-100' : 'bg-gray-100'
+                              }`}>
+                                <CategoryIcon className={`h-4 w-4 ${
+                                  complaint.category === 'maintenance' ? 'text-blue-600' :
+                                  complaint.category === 'security' ? 'text-red-600' :
+                                  complaint.category === 'noise' ? 'text-orange-600' :
+                                  complaint.category === 'cleanliness' ? 'text-green-600' : 'text-gray-600'
+                                }`} />
+                              </div>
+                              <span className="capitalize text-sm">{complaint.category}</span>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <Badge
+                              className={`font-medium ${
+                                complaint.priority === 'urgent'
+                                  ? 'bg-red-100 text-red-700 hover:bg-red-100'
+                                  : complaint.priority === 'high'
+                                  ? 'bg-orange-100 text-orange-700 hover:bg-orange-100'
+                                  : complaint.priority === 'medium'
+                                  ? 'bg-yellow-100 text-yellow-700 hover:bg-yellow-100'
+                                  : 'bg-gray-100 text-gray-700 hover:bg-gray-100'
+                              }`}
+                            >
+                              {complaint.priority === 'urgent' && (
+                                <AlertTriangle className="h-3 w-3 mr-1" />
+                              )}
+                              {complaint.priority}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            <Badge
+                              className={`font-medium ${
+                                complaint.status === 'resolved'
+                                  ? 'bg-green-100 text-green-700 hover:bg-green-100'
+                                  : complaint.status === 'in_progress'
+                                  ? 'bg-blue-100 text-blue-700 hover:bg-blue-100'
+                                  : 'bg-gray-100 text-gray-700 hover:bg-gray-100'
+                              }`}
+                            >
+                              {complaint.status === 'open' && (
+                                <span className="mr-1.5 h-1.5 w-1.5 rounded-full bg-red-500 animate-pulse inline-block" />
+                              )}
+                              {complaint.status.replace('_', ' ')}
+                            </Badge>
+                          </TableCell>
+                          {isAdmin && (
+                            <TableCell>
+                              {complaint.assignedTo ? (
+                                <div className="flex items-center gap-2">
+                                  <div className="h-6 w-6 rounded-full bg-blue-100 flex items-center justify-center">
+                                    <User className="h-3 w-3 text-blue-600" />
+                                  </div>
+                                  <span className="text-sm">{complaint.assignedTo}</span>
+                                </div>
+                              ) : (
+                                <Button variant="ghost" size="sm" className="text-blue-600 gap-1">
+                                  <UserPlus className="h-3 w-3" />
+                                  Assign
+                                </Button>
+                              )}
+                            </TableCell>
+                          )}
+                          <TableCell>
+                            <div className="flex items-center justify-end gap-1">
+                              <ComplaintDetailDialog complaint={complaint} />
+
+                              {isAdmin && complaint.status !== 'resolved' && (
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="text-green-600 hover:text-green-700 hover:bg-green-50 gap-1"
+                                >
+                                  <CheckCircle2 className="h-3.5 w-3.5" />
+                                  Resolve
+                                </Button>
+                              )}
+
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button variant="ghost" size="icon" className="h-8 w-8">
+                                    <MoreHorizontal className="h-4 w-4" />
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end">
+                                  <DropdownMenuItem>
+                                    <Eye className="h-4 w-4 mr-2" />
+                                    View Details
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem>
+                                    <MessageSquare className="h-4 w-4 mr-2" />
+                                    Add Comment
+                                  </DropdownMenuItem>
+                                  {isAdmin && (
+                                    <>
+                                      <DropdownMenuItem>
+                                        <UserPlus className="h-4 w-4 mr-2" />
+                                        Assign Staff
+                                      </DropdownMenuItem>
+                                      <DropdownMenuItem>
+                                        <Edit className="h-4 w-4 mr-2" />
+                                        Change Priority
+                                      </DropdownMenuItem>
+                                    </>
+                                  )}
+                                  <DropdownMenuSeparator />
+                                  <DropdownMenuItem className="text-red-600">
+                                    <Trash2 className="h-4 w-4 mr-2" />
+                                    Delete
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            </div>
+                          </TableCell>
+                        </motion.tr>
+                      )
+                    })}
+                  </AnimatePresence>
+                </TableBody>
+              </Table>
+
+              {filteredComplaints.length === 0 && (
+                <div className="flex flex-col items-center justify-center py-12 text-center">
+                  <div className="p-4 rounded-full bg-muted mb-4">
+                    <AlertCircle className="h-8 w-8 text-muted-foreground" />
+                  </div>
+                  <h3 className="text-lg font-medium">No complaints found</h3>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Try adjusting your search or filter criteria
+                  </p>
+                </div>
+              )}
+            </CardContent>
+          </Tabs>
+        </Card>
+      </div>
     </RoleGuard>
   )
 }

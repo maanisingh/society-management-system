@@ -230,6 +230,7 @@ export default function MyUnitPage() {
                           <Button
                             size="sm"
                             className="mt-2 bg-orange-600 hover:bg-orange-700"
+                            onClick={() => alert(`Redirecting to payment gateway...\n\nAmount: ₹${payment.amount.toLocaleString()}\nDescription: ${payment.description}`)}
                           >
                             Pay Now
                           </Button>
@@ -301,7 +302,7 @@ export default function MyUnitPage() {
                   </div>
                 ))}
               </div>
-              <Button variant="outline" className="w-full mt-4">
+              <Button variant="outline" className="w-full mt-4" onClick={() => alert('Add Family Member\n\nOpening form to add a new family member to your unit...')}>
                 Add Family Member
               </Button>
             </Card>
@@ -348,7 +349,7 @@ export default function MyUnitPage() {
                   </div>
                 ))}
               </div>
-              <Button variant="outline" className="w-full mt-4">
+              <Button variant="outline" className="w-full mt-4" onClick={() => alert('Register New Vehicle\n\nOpening form to register a new vehicle...')}>
                 Register New Vehicle
               </Button>
             </Card>
@@ -366,7 +367,7 @@ export default function MyUnitPage() {
                 <p className="text-sm text-gray-600">Recent transactions</p>
               </div>
               <div className="flex items-center space-x-2">
-                <Button variant="outline" size="sm">
+                <Button variant="outline" size="sm" onClick={() => alert('Downloading payment history as PDF...')}>
                   <Download className="h-4 w-4 mr-2" />
                   Download
                 </Button>
@@ -409,7 +410,7 @@ export default function MyUnitPage() {
                         </Badge>
                       </TableCell>
                       <TableCell>
-                        <Button variant="ghost" size="sm">
+                        <Button variant="ghost" size="sm" onClick={() => alert(`Invoice Details:\n\nID: ${payment.id}\nPeriod: ${payment.month}\nType: ${payment.type}\nAmount: ₹${payment.amount.toLocaleString()}\nDue Date: ${payment.dueDate}\nPaid Date: ${payment.paidDate}\nStatus: ${payment.status}`)}>
                           <Eye className="h-4 w-4" />
                         </Button>
                       </TableCell>

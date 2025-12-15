@@ -352,13 +352,31 @@ export default function InvoicesPage() {
                 </TableCell>
                 <TableCell>
                   <div className="flex items-center space-x-2">
-                    <Button variant="ghost" size="icon" title="View">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      title="View"
+                      onClick={() => alert(`Viewing invoice ${invoice.id}\n\nUnit: ${invoice.unit}\nResident: ${invoice.resident}\nAmount: ₹${invoice.amount.toLocaleString()}\nStatus: ${invoice.status}`)}
+                    >
                       <Eye className="h-4 w-4" />
                     </Button>
-                    <Button variant="ghost" size="icon" title="Send">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      title="Send"
+                      onClick={() => {
+                        const message = `Dear ${invoice.resident}, your invoice ${invoice.id} for ₹${invoice.amount.toLocaleString()} is ${invoice.status}. Due date: ${invoice.dueDate}.`
+                        window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, '_blank')
+                      }}
+                    >
                       <Send className="h-4 w-4" />
                     </Button>
-                    <Button variant="ghost" size="icon" title="Download">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      title="Download"
+                      onClick={() => alert(`Downloading invoice ${invoice.id} as PDF...`)}
+                    >
                       <Download className="h-4 w-4" />
                     </Button>
                   </div>

@@ -404,10 +404,20 @@ export default function DirectoryPage() {
                 <TableCell>{resident.joinDate}</TableCell>
                 <TableCell>
                   <div className="flex items-center space-x-2">
-                    <Button variant="ghost" size="icon" title="View Details">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      title="View Details"
+                      onClick={() => alert(`Resident Details:\n\nID: ${resident.id}\nName: ${resident.name}\nUnit: ${resident.unit}\nEmail: ${resident.email}\nPhone: ${resident.phone}\nFamily Members: ${resident.members}\nVehicles: ${resident.vehicles}\nType: ${resident.status}\nJoined: ${resident.joinDate}`)}
+                    >
                       <Eye className="h-4 w-4" />
                     </Button>
-                    <Button variant="ghost" size="icon" title="Send Email">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      title="Send Email"
+                      onClick={() => window.location.href = `mailto:${resident.email}?subject=Message from Society Management`}
+                    >
                       <Mail className="h-4 w-4" />
                     </Button>
                   </div>

@@ -260,20 +260,42 @@ export default function LandingPage() {
               initial={{ opacity: 0, x: 50 }}
               animate={heroInView ? { opacity: 1, x: 0 } : {}}
               transition={{ duration: 0.6, delay: 0.2 }}
-              className="relative"
+              className="relative hidden lg:block"
             >
-              <div className="relative rounded-2xl overflow-hidden shadow-2xl">
-                <div className="absolute inset-0 bg-gradient-to-br from-blue-600/20 to-purple-600/20 z-10" />
-                <img
-                  src="https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=800&h=600&fit=crop"
-                  alt="Dashboard Preview"
-                  className="w-full h-auto"
-                />
+              <div className="relative">
+                {/* Main Dashboard Image */}
+                <div className="relative rounded-2xl overflow-hidden shadow-2xl border border-gray-200">
+                  <img
+                    src="https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=800&h=600&fit=crop"
+                    alt="Modern Apartment Complex"
+                    className="w-full h-auto object-cover"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
+
+                  {/* Overlay Stats */}
+                  <div className="absolute bottom-4 left-4 right-4">
+                    <div className="grid grid-cols-3 gap-2">
+                      <div className="bg-white/95 backdrop-blur p-3 rounded-lg">
+                        <p className="text-2xl font-bold text-blue-600">180</p>
+                        <p className="text-xs text-gray-600">Units</p>
+                      </div>
+                      <div className="bg-white/95 backdrop-blur p-3 rounded-lg">
+                        <p className="text-2xl font-bold text-green-600">95%</p>
+                        <p className="text-xs text-gray-600">Occupied</p>
+                      </div>
+                      <div className="bg-white/95 backdrop-blur p-3 rounded-lg">
+                        <p className="text-2xl font-bold text-purple-600">24/7</p>
+                        <p className="text-xs text-gray-600">Security</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
                 {/* Floating Cards */}
                 <motion.div
                   animate={{ y: [0, -10, 0] }}
                   transition={{ duration: 3, repeat: Infinity }}
-                  className="absolute top-4 right-4 bg-white p-4 rounded-xl shadow-lg"
+                  className="absolute -top-4 -right-4 bg-white p-4 rounded-xl shadow-lg border border-gray-100"
                 >
                   <div className="flex items-center space-x-2">
                     <div className="p-2 bg-green-100 rounded-lg">
@@ -283,6 +305,33 @@ export default function LandingPage() {
                       <p className="text-xs text-gray-500">New Visitor</p>
                       <p className="text-sm font-semibold">Check-in: A-205</p>
                     </div>
+                  </div>
+                </motion.div>
+
+                <motion.div
+                  animate={{ y: [0, 10, 0] }}
+                  transition={{ duration: 4, repeat: Infinity, delay: 0.5 }}
+                  className="absolute -bottom-4 -left-4 bg-white p-4 rounded-xl shadow-lg border border-gray-100"
+                >
+                  <div className="flex items-center space-x-2">
+                    <div className="p-2 bg-blue-100 rounded-lg">
+                      <Wallet className="h-4 w-4 text-blue-600" />
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-500">Payment Received</p>
+                      <p className="text-sm font-semibold text-green-600">+₹8,500</p>
+                    </div>
+                  </div>
+                </motion.div>
+
+                <motion.div
+                  animate={{ x: [0, 5, 0] }}
+                  transition={{ duration: 3.5, repeat: Infinity, delay: 1 }}
+                  className="absolute top-1/2 -right-6 bg-gradient-to-r from-blue-600 to-purple-600 p-3 rounded-xl shadow-lg text-white"
+                >
+                  <div className="flex items-center space-x-2">
+                    <Bell className="h-4 w-4" />
+                    <span className="text-sm font-medium">3 New Alerts</span>
                   </div>
                 </motion.div>
               </div>

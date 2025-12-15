@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
 import {
   Search,
@@ -10,6 +11,8 @@ import {
   Menu,
   MessageSquare,
   Settings,
+  X,
+  Send,
 } from 'lucide-react'
 import { useTheme } from 'next-themes'
 import { Input } from '@/components/ui/input'
@@ -23,10 +26,50 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog'
+import { Textarea } from '@/components/ui/textarea'
+import { Avatar, AvatarFallback } from '@/components/ui/avatar'
+
+const messages = [
+  {
+    id: 1,
+    sender: 'Rajesh Kumar',
+    unit: 'A-101',
+    message: 'Hi, can you share the maintenance bill?',
+    time: '2 min ago',
+    unread: true,
+  },
+  {
+    id: 2,
+    sender: 'Priya Sharma',
+    unit: 'B-205',
+    message: 'Thanks for resolving the water issue!',
+    time: '1 hour ago',
+    unread: true,
+  },
+  {
+    id: 3,
+    sender: 'Security Desk',
+    unit: 'Gate 1',
+    message: 'Visitor arrived for A-502',
+    time: '3 hours ago',
+    unread: false,
+  },
+]
 
 export function Header() {
+  const router = useRouter()
   const { theme, setTheme } = useTheme()
   const [notificationCount] = useState(5)
+  const [messageOpen, setMessageOpen] = useState(false)
+  const [newMessage, setNewMessage] = useState('')
 
   return (
     <header className="h-16 border-b border-gray-200 bg-white sticky top-0 z-40 backdrop-blur-sm bg-white/95">
@@ -74,10 +117,73 @@ export function Header() {
           </Button>
 
           {/* Messages - Hidden on mobile */}
-          <Button variant="ghost" size="icon" className="rounded-full relative hidden md:flex">
-            <MessageSquare className="h-5 w-5" />
-            <span className="absolute top-1 right-1 w-2 h-2 bg-blue-500 rounded-full" />
-          </Button>
+          <Dialog open={messageOpen} onOpenChange={setMessageOpen}>
+            <DialogTrigger asChild>
+              <Button variant="ghost" size="icon" className="rounded-full relative hidden md:flex">
+                <MessageSquare className="h-5 w-5" />
+                <span className="absolute top-1 right-1 w-2 h-2 bg-blue-500 rounded-full" />
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-md">
+              <DialogHeader>
+                <DialogTitle className="flex items-center gap-2">
+                  <MessageSquare className="h-5 w-5 text-blue-500" />
+                  Messages
+                </DialogTitle>
+                <DialogDescription>
+                  Your recent conversations
+                </DialogDescription>
+              </DialogHeader>
+              <div className="space-y-3 max-h-[300px] overflow-y-auto">
+                {messages.map((msg) => (
+                  <div
+                    key={msg.id}
+                    className={`flex items-start gap-3 p-3 rounded-lg cursor-pointer transition-colors ${
+                      msg.unread ? 'bg-blue-50 hover:bg-blue-100' : 'hover:bg-gray-50'
+                    }`}
+                    onClick={() => alert(`Opening conversation with ${msg.sender}`)}
+                  >
+                    <Avatar className="h-10 w-10">
+                      <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-600 text-white text-sm">
+                        {msg.sender.charAt(0)}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between">
+                        <p className="font-medium text-sm">{msg.sender}</p>
+                        <span className="text-xs text-gray-500">{msg.time}</span>
+                      </div>
+                      <p className="text-xs text-gray-500">{msg.unit}</p>
+                      <p className="text-sm text-gray-600 truncate mt-1">{msg.message}</p>
+                    </div>
+                    {msg.unread && (
+                      <span className="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0 mt-2" />
+                    )}
+                  </div>
+                ))}
+              </div>
+              <div className="flex gap-2 pt-4 border-t">
+                <Textarea
+                  placeholder="Type a message..."
+                  value={newMessage}
+                  onChange={(e) => setNewMessage(e.target.value)}
+                  className="flex-1 min-h-[60px]"
+                />
+                <Button
+                  size="icon"
+                  className="h-[60px] w-[60px] bg-gradient-to-r from-blue-600 to-purple-600"
+                  onClick={() => {
+                    if (newMessage.trim()) {
+                      alert('Message sent: ' + newMessage)
+                      setNewMessage('')
+                    }
+                  }}
+                >
+                  <Send className="h-5 w-5" />
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
 
           {/* Notifications */}
           <DropdownMenu>
@@ -154,7 +260,13 @@ export function Header() {
           </DropdownMenu>
 
           {/* Settings - Hidden on mobile */}
-          <Button variant="ghost" size="icon" className="rounded-full hidden md:flex">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="rounded-full hidden md:flex"
+            onClick={() => router.push('/dashboard/settings')}
+            title="Settings"
+          >
             <Settings className="h-5 w-5" />
           </Button>
         </div>
