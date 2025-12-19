@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 import { RoleGuard } from '@/components/auth/role-guard'
 import {
   Plus,
@@ -14,6 +14,8 @@ import {
   CheckCircle,
   Eye,
   Edit,
+  CheckCircle2,
+  Trash2,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -41,32 +43,32 @@ import { Textarea } from '@/components/ui/textarea'
 
 const stats = [
   {
-    title: 'Total Assets',
-    value: '156',
-    change: '+12',
+    title: 'Total Asset Value',
+    value: '\u20B91.06Cr',
+    change: '156 assets',
     icon: Package,
     color: 'blue',
   },
   {
-    title: 'Working',
+    title: 'Monthly Expense',
+    value: '\u20B92.8L',
+    change: 'AMC + Maintenance',
+    icon: Wrench,
+    color: 'purple',
+  },
+  {
+    title: 'Working Assets',
     value: '142',
-    change: '+8',
+    change: '91% operational',
     icon: CheckCircle,
     color: 'green',
   },
   {
-    title: 'Under Maintenance',
+    title: 'Maintenance Due',
     value: '8',
-    change: '+2',
-    icon: Wrench,
-    color: 'orange',
-  },
-  {
-    title: 'Damaged',
-    value: '6',
-    change: '-3',
+    change: 'Needs attention',
     icon: AlertCircle,
-    color: 'red',
+    color: 'orange',
   },
 ]
 
@@ -78,6 +80,8 @@ const assets = [
     location: 'Block A - Ground Floor',
     purchaseDate: '2020-01-15',
     value: 5000000,
+    monthlyExpense: 45000,
+    amcCost: 120000,
     condition: 'working',
     lastMaintenance: '2024-12-01',
     nextMaintenance: '2025-03-01',
@@ -90,6 +94,8 @@ const assets = [
     location: 'Club House',
     purchaseDate: '2021-06-10',
     value: 850000,
+    monthlyExpense: 15000,
+    amcCost: 48000,
     condition: 'working',
     lastMaintenance: '2024-11-15',
     nextMaintenance: '2025-02-15',
@@ -102,6 +108,8 @@ const assets = [
     location: 'All Blocks',
     purchaseDate: '2019-03-20',
     value: 2500000,
+    monthlyExpense: 8000,
+    amcCost: 60000,
     condition: 'working',
     lastMaintenance: '2024-12-20',
     nextMaintenance: '2025-06-20',
@@ -114,6 +122,8 @@ const assets = [
     location: 'Block A',
     purchaseDate: '2019-01-01',
     value: 1800000,
+    monthlyExpense: 35000,
+    amcCost: 180000,
     condition: 'maintenance',
     lastMaintenance: '2024-12-28',
     nextMaintenance: '2025-01-10',
@@ -126,6 +136,8 @@ const assets = [
     location: 'All Areas',
     purchaseDate: '2020-08-15',
     value: 450000,
+    monthlyExpense: 5000,
+    amcCost: 36000,
     condition: 'working',
     lastMaintenance: '2024-11-01',
     nextMaintenance: '2025-05-01',
@@ -138,6 +150,42 @@ export default function AssetsPage() {
   const [categoryFilter, setCategoryFilter] = useState('all')
   const [conditionFilter, setConditionFilter] = useState('all')
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
+  const [showSuccess, setShowSuccess] = useState<string | null>(null)
+  const [viewingAsset, setViewingAsset] = useState<typeof assets[0] | null>(null)
+  const [editingAsset, setEditingAsset] = useState<typeof assets[0] | null>(null)
+
+  const showNotification = (message: string) => {
+    setShowSuccess(message)
+    setTimeout(() => setShowSuccess(null), 3000)
+  }
+
+  const handleAddAsset = () => {
+    setIsAddDialogOpen(false)
+    showNotification('Asset added successfully!')
+  }
+
+  const handleExport = () => {
+    showNotification('Assets exported successfully!')
+  }
+
+  const handleViewAsset = (asset: typeof assets[0]) => {
+    setViewingAsset(asset)
+  }
+
+  const handleEditAsset = (asset: typeof assets[0]) => {
+    setEditingAsset(asset)
+  }
+
+  const handleSaveEdit = () => {
+    setEditingAsset(null)
+    showNotification('Asset updated successfully!')
+  }
+
+  const handleDeleteAsset = (assetId: string) => {
+    if (confirm(`Are you sure you want to delete asset ${assetId}?`)) {
+      showNotification(`Asset ${assetId} deleted successfully!`)
+    }
+  }
 
   const filteredAssets = assets.filter((asset) => {
     const matchesSearch =
@@ -153,24 +201,38 @@ export default function AssetsPage() {
 
   return (
     <RoleGuard allowedRoles={['admin']}>
-
     <div className="space-y-6">
+      {/* Success Notification */}
+      <AnimatePresence>
+        {showSuccess && (
+          <motion.div
+            initial={{ opacity: 0, y: -50 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -50 }}
+            className="fixed top-4 right-4 z-50 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg flex items-center gap-2"
+          >
+            <CheckCircle2 className="h-5 w-5" />
+            {showSuccess}
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Asset Management</h1>
-          <p className="text-gray-600 mt-1">
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Asset Management</h1>
+          <p className="text-gray-600 mt-1 text-sm sm:text-base">
             Track and manage all society assets and equipment
           </p>
         </div>
-        <div className="flex items-center space-x-3">
-          <Button variant="outline" className="space-x-2">
+        <div className="flex flex-wrap items-center gap-2">
+          <Button variant="outline" className="gap-2 text-sm" onClick={handleExport}>
             <Download className="h-4 w-4" />
-            <span>Export</span>
+            <span className="hidden sm:inline">Export</span>
           </Button>
           <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
             <DialogTrigger asChild>
-              <Button className="bg-gradient-to-r from-blue-600 to-purple-600 text-white space-x-2">
+              <Button className="bg-gradient-to-r from-teal-500 to-cyan-500 text-white gap-2 text-sm">
                 <Plus className="h-4 w-4" />
                 <span>Add Asset</span>
               </Button>
@@ -242,7 +304,7 @@ export default function AssetsPage() {
                   <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>
                     Cancel
                   </Button>
-                  <Button className="bg-blue-600 hover:bg-blue-700">
+                  <Button className="bg-blue-600 hover:bg-blue-700" onClick={handleAddAsset}>
                     Add Asset
                   </Button>
                 </div>
@@ -284,6 +346,8 @@ export default function AssetsPage() {
                         ? 'bg-green-100'
                         : stat.color === 'orange'
                         ? 'bg-orange-100'
+                        : stat.color === 'purple'
+                        ? 'bg-purple-100'
                         : 'bg-red-100'
                     }`}
                   >
@@ -295,6 +359,8 @@ export default function AssetsPage() {
                           ? 'text-green-600'
                           : stat.color === 'orange'
                           ? 'text-orange-600'
+                          : stat.color === 'purple'
+                          ? 'text-purple-600'
                           : 'text-red-600'
                       }`}
                     />
@@ -351,7 +417,8 @@ export default function AssetsPage() {
       </Card>
 
       {/* Assets Table */}
-      <Card>
+      <Card className="overflow-hidden">
+        <div className="overflow-x-auto">
         <Table>
           <TableHeader>
             <TableRow>
@@ -360,8 +427,9 @@ export default function AssetsPage() {
               <TableHead>Category</TableHead>
               <TableHead>Location</TableHead>
               <TableHead>Value</TableHead>
+              <TableHead>Monthly Cost</TableHead>
+              <TableHead>AMC/Year</TableHead>
               <TableHead>Condition</TableHead>
-              <TableHead>Last Maintenance</TableHead>
               <TableHead>Next Maintenance</TableHead>
               <TableHead>Actions</TableHead>
             </TableRow>
@@ -376,7 +444,13 @@ export default function AssetsPage() {
                 </TableCell>
                 <TableCell className="text-sm text-gray-600">{asset.location}</TableCell>
                 <TableCell className="font-semibold">
-                  ₹{(asset.value / 100000).toFixed(2)}L
+                  \u20B9{(asset.value / 100000).toFixed(2)}L
+                </TableCell>
+                <TableCell className="font-medium text-orange-600">
+                  \u20B9{asset.monthlyExpense.toLocaleString()}
+                </TableCell>
+                <TableCell className="text-sm text-purple-600">
+                  \u20B9{(asset.amcCost / 1000).toFixed(0)}K
                 </TableCell>
                 <TableCell>
                   <Badge
@@ -403,15 +477,17 @@ export default function AssetsPage() {
                     {asset.condition}
                   </Badge>
                 </TableCell>
-                <TableCell className="text-sm">{asset.lastMaintenance}</TableCell>
                 <TableCell className="text-sm">{asset.nextMaintenance}</TableCell>
                 <TableCell>
                   <div className="flex items-center space-x-2">
-                    <Button variant="ghost" size="icon" title="View Details">
+                    <Button variant="ghost" size="icon" title="View Details" onClick={() => handleViewAsset(asset)}>
                       <Eye className="h-4 w-4" />
                     </Button>
-                    <Button variant="ghost" size="icon" title="Edit">
+                    <Button variant="ghost" size="icon" title="Edit" onClick={() => handleEditAsset(asset)}>
                       <Edit className="h-4 w-4" />
+                    </Button>
+                    <Button variant="ghost" size="icon" title="Delete" onClick={() => handleDeleteAsset(asset.id)}>
+                      <Trash2 className="h-4 w-4 text-red-500" />
                     </Button>
                   </div>
                 </TableCell>
@@ -419,7 +495,119 @@ export default function AssetsPage() {
             ))}
           </TableBody>
         </Table>
+        </div>
       </Card>
+
+      {/* View Asset Dialog */}
+      <Dialog open={viewingAsset !== null} onOpenChange={() => setViewingAsset(null)}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Asset Details</DialogTitle>
+            <DialogDescription>View asset information</DialogDescription>
+          </DialogHeader>
+          {viewingAsset && (
+            <div className="space-y-4 py-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label className="text-muted-foreground text-sm">Asset ID</Label>
+                  <p className="font-medium">{viewingAsset.id}</p>
+                </div>
+                <div>
+                  <Label className="text-muted-foreground text-sm">Name</Label>
+                  <p className="font-medium">{viewingAsset.name}</p>
+                </div>
+                <div>
+                  <Label className="text-muted-foreground text-sm">Category</Label>
+                  <p className="font-medium">{viewingAsset.category}</p>
+                </div>
+                <div>
+                  <Label className="text-muted-foreground text-sm">Location</Label>
+                  <p className="font-medium">{viewingAsset.location}</p>
+                </div>
+                <div>
+                  <Label className="text-muted-foreground text-sm">Value</Label>
+                  <p className="font-medium">₹{(viewingAsset.value / 100000).toFixed(2)}L</p>
+                </div>
+                <div>
+                  <Label className="text-muted-foreground text-sm">Condition</Label>
+                  <Badge className={viewingAsset.condition === 'working' ? 'bg-green-100 text-green-700' : viewingAsset.condition === 'damaged' ? 'bg-red-100 text-red-700' : 'bg-orange-100 text-orange-700'}>
+                    {viewingAsset.condition}
+                  </Badge>
+                </div>
+                <div>
+                  <Label className="text-muted-foreground text-sm">Last Maintenance</Label>
+                  <p className="font-medium">{viewingAsset.lastMaintenance}</p>
+                </div>
+                <div>
+                  <Label className="text-muted-foreground text-sm">Next Maintenance</Label>
+                  <p className="font-medium">{viewingAsset.nextMaintenance}</p>
+                </div>
+              </div>
+              <div className="flex justify-end pt-4">
+                <Button onClick={() => setViewingAsset(null)}>Close</Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Asset Dialog */}
+      <Dialog open={editingAsset !== null} onOpenChange={() => setEditingAsset(null)}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Edit Asset</DialogTitle>
+            <DialogDescription>Update asset information</DialogDescription>
+          </DialogHeader>
+          {editingAsset && (
+            <div className="space-y-4 py-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Asset Name</Label>
+                  <Input defaultValue={editingAsset.name} />
+                </div>
+                <div className="space-y-2">
+                  <Label>Category</Label>
+                  <Select defaultValue={editingAsset.category.toLowerCase()}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="amenity">Amenity</SelectItem>
+                      <SelectItem value="fitness">Fitness</SelectItem>
+                      <SelectItem value="safety">Safety</SelectItem>
+                      <SelectItem value="equipment">Equipment</SelectItem>
+                      <SelectItem value="security">Security</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Location</Label>
+                  <Input defaultValue={editingAsset.location} />
+                </div>
+                <div className="space-y-2">
+                  <Label>Condition</Label>
+                  <Select defaultValue={editingAsset.condition}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="working">Working</SelectItem>
+                      <SelectItem value="maintenance">Under Maintenance</SelectItem>
+                      <SelectItem value="damaged">Damaged</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <div className="flex justify-end space-x-2 pt-4">
+                <Button variant="outline" onClick={() => setEditingAsset(null)}>Cancel</Button>
+                <Button className="bg-blue-600 hover:bg-blue-700" onClick={handleSaveEdit}>Save Changes</Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
     </RoleGuard>
   )

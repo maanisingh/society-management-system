@@ -172,7 +172,7 @@ export default function DirectoryPage() {
           </Button>
           <Dialog>
             <DialogTrigger asChild>
-              <Button className="bg-gradient-to-r from-blue-600 to-purple-600 text-white space-x-2">
+              <Button className="bg-gradient-to-r from-teal-500 to-cyan-500 text-white space-x-2">
                 <Plus className="h-4 w-4" />
                 <span>Add Resident</span>
               </Button>
@@ -360,7 +360,7 @@ export default function DirectoryPage() {
                   <div className="flex items-center space-x-3">
                     <Avatar>
                       <AvatarImage src={resident.avatar || undefined} />
-                      <AvatarFallback className="bg-gradient-to-br from-blue-600 to-purple-600 text-white">
+                      <AvatarFallback className="bg-gradient-to-br from-teal-500 to-cyan-500 text-white">
                         {resident.name.charAt(0)}
                       </AvatarFallback>
                     </Avatar>

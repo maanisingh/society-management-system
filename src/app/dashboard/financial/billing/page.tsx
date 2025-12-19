@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 import { RoleGuard } from '@/components/auth/role-guard'
 import {
   Plus,
@@ -19,6 +19,7 @@ import {
   Mail,
   MoreHorizontal,
   CheckCircle,
+  CheckCircle2,
   Clock,
   AlertTriangle,
   FileText,
@@ -239,6 +240,38 @@ export default function BillingPage() {
   const [blockFilter, setBlockFilter] = useState('all')
   const [selectedInvoices, setSelectedInvoices] = useState<string[]>([])
   const [viewInvoice, setViewInvoice] = useState<typeof invoices[0] | null>(null)
+  const [isGenerateDialogOpen, setIsGenerateDialogOpen] = useState(false)
+  const [showSuccess, setShowSuccess] = useState<string | null>(null)
+
+  const showNotification = (message: string) => {
+    setShowSuccess(message)
+    setTimeout(() => setShowSuccess(null), 3000)
+  }
+
+  const handleGenerateBills = () => {
+    setIsGenerateDialogOpen(false)
+    showNotification('Bills generated and sent successfully!')
+  }
+
+  const handleExport = () => {
+    showNotification('Data exported successfully!')
+  }
+
+  const handleBulkWhatsApp = () => {
+    showNotification(`WhatsApp sent to ${selectedInvoices.length} residents!`)
+  }
+
+  const handleBulkEmail = () => {
+    showNotification(`Email sent to ${selectedInvoices.length} residents!`)
+  }
+
+  const handleBulkDownload = () => {
+    showNotification(`Downloading ${selectedInvoices.length} invoices as PDF...`)
+  }
+
+  const handleMarkAsPaid = (invoiceId: string) => {
+    showNotification(`Invoice ${invoiceId} marked as paid!`)
+  }
 
   const filteredInvoices = invoices.filter((invoice) => {
     const matchesSearch =
@@ -266,6 +299,21 @@ export default function BillingPage() {
 
   return (
     <RoleGuard allowedRoles={['admin']}>
+      {/* Success Notification */}
+      <AnimatePresence>
+        {showSuccess && (
+          <motion.div
+            initial={{ opacity: 0, y: -50 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -50 }}
+            className="fixed top-4 right-4 z-50 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg flex items-center gap-2"
+          >
+            <CheckCircle2 className="h-5 w-5" />
+            {showSuccess}
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       <motion.div
         variants={containerVariants}
         initial="hidden"
@@ -276,7 +324,7 @@ export default function BillingPage() {
         <motion.div variants={itemVariants} className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div>
             <div className="flex items-center gap-2 mb-1">
-              <h1 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-gray-900 to-gray-600 bg-clip-text text-transparent">
+              <h1 className="text-2xl sm:text-3xl font-bold text-[#1e3a5f]">
                 Billing Management
               </h1>
             </div>
@@ -284,16 +332,17 @@ export default function BillingPage() {
               Generate invoices, track payments, and send reminders
             </p>
           </div>
-          <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm">
-              <Download className="h-4 w-4 mr-2" />
-              Export
+          <div className="flex flex-wrap items-center gap-2">
+            <Button variant="outline" size="sm" onClick={handleExport} className="text-xs sm:text-sm">
+              <Download className="h-4 w-4 sm:mr-2" />
+              <span className="hidden sm:inline">Export</span>
             </Button>
-            <Dialog>
+            <Dialog open={isGenerateDialogOpen} onOpenChange={setIsGenerateDialogOpen}>
               <DialogTrigger asChild>
-                <Button className="bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg shadow-blue-500/25">
-                  <Sparkles className="h-4 w-4 mr-2" />
-                  Generate Bills
+                <Button size="sm" className="bg-gradient-to-r from-teal-500 to-cyan-500 text-white shadow-lg shadow-teal-500/25 text-xs sm:text-sm">
+                  <Sparkles className="h-4 w-4 sm:mr-2" />
+                  <span className="hidden sm:inline">Generate Bills</span>
+                  <span className="sm:hidden">Bills</span>
                 </Button>
               </DialogTrigger>
               <DialogContent className="max-w-2xl">
@@ -406,8 +455,9 @@ export default function BillingPage() {
                   </div>
                 </div>
                 <DialogFooter>
-                  <Button variant="outline">Preview Bills</Button>
-                  <Button className="bg-gradient-to-r from-blue-600 to-purple-600 text-white">
+                  <Button variant="outline" onClick={() => setIsGenerateDialogOpen(false)}>Cancel</Button>
+                  <Button variant="outline" onClick={() => showNotification('Preview generated!')}>Preview Bills</Button>
+                  <Button className="bg-gradient-to-r from-teal-500 to-cyan-500 text-white" onClick={handleGenerateBills}>
                     <Send className="h-4 w-4 mr-2" />
                     Generate & Send
                   </Button>
@@ -446,27 +496,29 @@ export default function BillingPage() {
         {/* Tabs */}
         <motion.div variants={itemVariants}>
           <Tabs defaultValue="invoices" className="space-y-4">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-              <TabsList className="bg-gray-100">
-                <TabsTrigger value="invoices">All Invoices</TabsTrigger>
-                <TabsTrigger value="pending">Pending</TabsTrigger>
-                <TabsTrigger value="overdue">Overdue</TabsTrigger>
-              </TabsList>
+            <div className="flex flex-col gap-4">
+              <div className="overflow-x-auto -mx-1 px-1">
+                <TabsList className="bg-gray-100 w-max sm:w-auto">
+                  <TabsTrigger value="invoices" className="text-xs sm:text-sm">All Invoices</TabsTrigger>
+                  <TabsTrigger value="pending" className="text-xs sm:text-sm">Pending</TabsTrigger>
+                  <TabsTrigger value="overdue" className="text-xs sm:text-sm">Overdue</TabsTrigger>
+                </TabsList>
+              </div>
 
               {/* Filters */}
               <div className="flex items-center gap-2 flex-wrap">
-                <div className="relative">
+                <div className="relative flex-1 sm:flex-none">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
                   <Input
                     type="search"
                     placeholder="Search..."
-                    className="pl-10 w-48"
+                    className="pl-10 w-full sm:w-48"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                   />
                 </div>
                 <Select value={statusFilter} onValueChange={setStatusFilter}>
-                  <SelectTrigger className="w-32">
+                  <SelectTrigger className="w-24 sm:w-32 text-xs sm:text-sm">
                     <SelectValue placeholder="Status" />
                   </SelectTrigger>
                   <SelectContent>
@@ -477,7 +529,7 @@ export default function BillingPage() {
                   </SelectContent>
                 </Select>
                 <Select value={blockFilter} onValueChange={setBlockFilter}>
-                  <SelectTrigger className="w-32">
+                  <SelectTrigger className="w-24 sm:w-32 text-xs sm:text-sm">
                     <SelectValue placeholder="Block" />
                   </SelectTrigger>
                   <SelectContent>
@@ -499,15 +551,15 @@ export default function BillingPage() {
                     {selectedInvoices.length} selected
                   </span>
                   <div className="flex-1" />
-                  <Button size="sm" variant="outline" className="text-green-600 border-green-200 hover:bg-green-50">
+                  <Button size="sm" variant="outline" className="text-green-600 border-green-200 hover:bg-green-50" onClick={handleBulkWhatsApp}>
                     <MessageSquare className="h-4 w-4 mr-1" />
                     WhatsApp All
                   </Button>
-                  <Button size="sm" variant="outline" className="text-blue-600 border-blue-200 hover:bg-blue-50">
+                  <Button size="sm" variant="outline" className="text-blue-600 border-blue-200 hover:bg-blue-50" onClick={handleBulkEmail}>
                     <Mail className="h-4 w-4 mr-1" />
                     Email All
                   </Button>
-                  <Button size="sm" variant="outline">
+                  <Button size="sm" variant="outline" onClick={handleBulkDownload}>
                     <Download className="h-4 w-4 mr-1" />
                     Download PDF
                   </Button>
@@ -516,6 +568,7 @@ export default function BillingPage() {
 
               {/* Invoices Table */}
               <Card className="border-0 shadow-md overflow-hidden">
+                <div className="overflow-x-auto">
                 <Table>
                   <TableHeader>
                     <TableRow className="bg-gray-50">
@@ -629,22 +682,18 @@ export default function BillingPage() {
                                 <DropdownMenuSeparator />
                                 <DropdownMenuItem onClick={() => {
                                   window.print()
-                                  alert(`Printing invoice ${invoice.id}...`)
+                                  showNotification(`Printing invoice ${invoice.id}...`)
                                 }}>
                                   <Printer className="h-4 w-4 mr-2" />
                                   Print Invoice
                                 </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => {
-                                  alert(`Downloading PDF for invoice ${invoice.id}...`)
-                                }}>
+                                <DropdownMenuItem onClick={() => showNotification(`Downloading PDF for invoice ${invoice.id}...`)}>
                                   <Download className="h-4 w-4 mr-2" />
                                   Download PDF
                                 </DropdownMenuItem>
                                 <DropdownMenuSeparator />
                                 {invoice.status !== 'paid' && (
-                                  <DropdownMenuItem className="text-green-600" onClick={() => {
-                                    alert(`Invoice ${invoice.id} marked as paid!`)
-                                  }}>
+                                  <DropdownMenuItem className="text-green-600" onClick={() => handleMarkAsPaid(invoice.id)}>
                                     <CheckCircle className="h-4 w-4 mr-2" />
                                     Mark as Paid
                                   </DropdownMenuItem>
@@ -657,6 +706,7 @@ export default function BillingPage() {
                     ))}
                   </TableBody>
                 </Table>
+                </div>
               </Card>
             </TabsContent>
 
@@ -746,15 +796,16 @@ export default function BillingPage() {
                     <Button className="flex-1" variant="outline" onClick={() => {
                       const message = `Invoice ${viewInvoice.id} - Amount: ₹${viewInvoice.amount.toLocaleString()}`
                       window.open(`https://wa.me/${viewInvoice.phone.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(message)}`, '_blank')
+                      showNotification('WhatsApp opened!')
                     }}>
                       <MessageSquare className="h-4 w-4 mr-2" />
                       WhatsApp
                     </Button>
-                    <Button className="flex-1" variant="outline">
+                    <Button className="flex-1" variant="outline" onClick={() => showNotification(`Email sent to ${viewInvoice.resident}!`)}>
                       <Mail className="h-4 w-4 mr-2" />
                       Email
                     </Button>
-                    <Button className="flex-1" variant="outline">
+                    <Button className="flex-1" variant="outline" onClick={() => showNotification('PDF downloaded!')}>
                       <Download className="h-4 w-4 mr-2" />
                       PDF
                     </Button>

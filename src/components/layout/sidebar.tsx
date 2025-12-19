@@ -22,6 +22,21 @@ import {
   Package,
   ClipboardList,
   TrendingUp,
+  AlertTriangle,
+  MessageSquare,
+  Headphones,
+  BookOpen,
+  ShoppingCart,
+  ShoppingBag,
+  Truck,
+  UserCheck,
+  Scale,
+  Receipt,
+  Building,
+  MessageCircle,
+  PackageCheck,
+  Car,
+  CreditCard,
 } from 'lucide-react'
 import { cn } from '@/lib/utils/cn'
 import { useAuthStore } from '@/lib/stores/auth-store'
@@ -34,19 +49,48 @@ const allMenuItems = [
     icon: LayoutDashboard,
     href: '/dashboard',
     badge: null,
-    roles: ['admin', 'resident', 'guard'], // Available to all
+    roles: ['admin', 'resident', 'guard'],
+  },
+  {
+    title: 'Guard Station',
+    icon: Shield,
+    href: '/dashboard/guard',
+    roles: ['guard'],
+    submenu: [
+      { title: 'Dashboard', icon: LayoutDashboard, href: '/dashboard/guard/dashboard' },
+      { title: 'Check-in Visitors', icon: UserCheck, href: '/dashboard/security/visitors' },
+      { title: 'Domestic Helpers', icon: Users, href: '/dashboard/staff/maids' },
+      { title: 'Parcels', icon: Package, href: '/dashboard/security/parcels' },
+    ],
   },
   {
     title: 'My Unit',
     icon: Home,
     href: '/dashboard/my-unit',
-    roles: ['resident'], // Residents only - for their unit info
+    roles: ['resident'],
+  },
+  {
+    title: 'SOS / Emergency',
+    icon: AlertTriangle,
+    href: '/dashboard/sos',
+    badge: null,
+    roles: ['admin', 'resident', 'guard'],
+  },
+  {
+    title: 'Helpdesk',
+    icon: Headphones,
+    href: '/dashboard/helpdesk',
+    roles: ['admin', 'resident'],
+    submenu: [
+      { title: 'Tickets', icon: ClipboardList, href: '/dashboard/helpdesk/tickets' },
+      { title: 'Live Chat', icon: MessageCircle, href: '/dashboard/helpdesk/chat' },
+    ],
   },
   {
     title: 'Financial',
     icon: Wallet,
     href: '/dashboard/financial',
-    roles: ['admin'], // Admin only
+    roles: ['admin'],
     submenu: [
       { title: 'Billing', icon: FileText, href: '/dashboard/financial/billing' },
       { title: 'Invoices', icon: FileText, href: '/dashboard/financial/invoices' },
@@ -54,11 +98,36 @@ const allMenuItems = [
     ],
   },
   {
+    title: 'Accounting',
+    icon: BookOpen,
+    href: '/dashboard/accounting',
+    roles: ['admin'],
+    submenu: [
+      { title: 'Income & Expense', icon: TrendingUp, href: '/dashboard/accounting/income-expense' },
+      { title: 'General Ledger', icon: BookOpen, href: '/dashboard/accounting/ledger' },
+      { title: 'Trial Balance', icon: Scale, href: '/dashboard/accounting/trial-balance' },
+      { title: 'Journal Entries', icon: FileText, href: '/dashboard/accounting/journal' },
+      { title: 'Bank Management', icon: Building, href: '/dashboard/accounting/bank' },
+      { title: 'Vendor Payments', icon: Receipt, href: '/dashboard/accounting/vendor-payments' },
+    ],
+  },
+  {
+    title: 'Purchase',
+    icon: ShoppingCart,
+    href: '/dashboard/purchase',
+    roles: ['admin'],
+    submenu: [
+      { title: 'Purchase Requests', icon: FileText, href: '/dashboard/purchase/requests' },
+      { title: 'Purchase Orders', icon: ShoppingCart, href: '/dashboard/purchase/orders' },
+      { title: 'GR/SR', icon: PackageCheck, href: '/dashboard/purchase/receipts' },
+    ],
+  },
+  {
     title: 'Security',
     icon: Shield,
     href: '/dashboard/security',
     badge: 3,
-    roles: ['admin', 'guard'], // Admin and Guard
+    roles: ['admin'],
     submenu: [
       { title: 'Visitors', icon: Users, href: '/dashboard/security/visitors' },
       { title: 'Vehicles', icon: Package, href: '/dashboard/security/vehicles' },
@@ -66,21 +135,54 @@ const allMenuItems = [
     ],
   },
   {
+    title: 'Parking',
+    icon: Car,
+    href: '/dashboard/parking',
+    roles: ['admin'],
+    submenu: [
+      { title: 'Slot Management', icon: Car, href: '/dashboard/parking/slots' },
+      { title: 'Payments', icon: CreditCard, href: '/dashboard/parking/payments' },
+    ],
+  },
+  {
+    title: 'Staff Management',
+    icon: Users,
+    href: '/dashboard/staff',
+    roles: ['admin'],
+    submenu: [
+      { title: 'Security Guards', icon: Shield, href: '/dashboard/staff/guards' },
+      { title: 'Domestic Helpers', icon: Users, href: '/dashboard/staff/maids' },
+    ],
+  },
+  {
+    title: 'Move In/Out',
+    icon: Truck,
+    href: '/dashboard/move-management',
+    roles: ['admin'],
+  },
+  {
     title: 'Community',
     icon: Users,
     href: '/dashboard/residents',
-    roles: ['resident'], // Residents only - renamed from "Residents"
+    roles: ['resident'],
     submenu: [
+      { title: 'Forum', icon: MessageSquare, href: '/dashboard/community/forum' },
       { title: 'Amenities', icon: Calendar, href: '/dashboard/residents/amenities' },
       { title: 'Events', icon: Calendar, href: '/dashboard/residents/events' },
       { title: 'Notices', icon: Bell, href: '/dashboard/residents/notices' },
     ],
   },
   {
+    title: 'Marketplace',
+    icon: ShoppingBag,
+    href: '/dashboard/marketplace',
+    roles: ['resident'],
+  },
+  {
     title: 'Residents',
     icon: Users,
     href: '/dashboard/residents',
-    roles: ['admin'], // Admin only
+    roles: ['admin'],
     submenu: [
       { title: 'Directory', icon: Users, href: '/dashboard/residents/directory' },
       { title: 'Amenities', icon: Calendar, href: '/dashboard/residents/amenities' },
@@ -92,18 +194,20 @@ const allMenuItems = [
     title: 'Administration',
     icon: Wrench,
     href: '/dashboard/admin',
-    roles: ['admin'], // Admin only
+    roles: ['admin'],
     submenu: [
+      { title: 'Tenants', icon: UserCheck, href: '/dashboard/admin/tenants' },
       { title: 'Complaints', icon: ClipboardList, href: '/dashboard/admin/complaints' },
       { title: 'Assets', icon: Package, href: '/dashboard/admin/assets' },
       { title: 'Vendors', icon: Users, href: '/dashboard/admin/vendors' },
+      { title: 'Defaulters', icon: AlertTriangle, href: '/dashboard/admin/defaulters' },
     ],
   },
   {
     title: 'Settings',
     icon: Settings,
     href: '/dashboard/settings',
-    roles: ['admin', 'resident', 'guard'], // Available to all
+    roles: ['admin', 'resident', 'guard'],
   },
 ]
 
@@ -135,10 +239,10 @@ export function Sidebar() {
     <motion.aside
       animate={{ width: isCollapsed ? 80 : 280 }}
       transition={{ duration: 0.3, ease: 'easeInOut' }}
-      className="h-screen bg-white border-r border-gray-200 flex flex-col sticky top-0 shadow-sm"
+      className="h-screen bg-[#1e3a5f] flex flex-col sticky top-0 shadow-xl"
     >
       {/* Header */}
-      <div className="p-6 border-b border-gray-200 flex items-center justify-between">
+      <div className="p-6 border-b border-[#2d4a6f] flex items-center justify-between">
         <AnimatePresence mode="wait">
           {!isCollapsed && (
             <motion.div
@@ -147,17 +251,17 @@ export function Sidebar() {
               exit={{ opacity: 0 }}
               className="flex items-center space-x-3"
             >
-              <div className="p-2 bg-gradient-to-br from-blue-600 to-purple-600 rounded-xl">
+              <div className="p-2.5 bg-gradient-to-br from-teal-400 to-cyan-500 rounded-xl shadow-lg">
                 <Building2 className="h-6 w-6 text-white" />
               </div>
               <div>
-                <h2 className="text-lg font-bold text-gray-900">Society Hub</h2>
-                <p className="text-xs text-gray-500">
+                <h2 className="text-lg font-bold text-white tracking-wide">ADDA</h2>
+                <p className="text-xs text-teal-300">
                   {user?.role === 'admin'
-                    ? 'Admin Panel'
+                    ? 'Community Manager'
                     : user?.role === 'guard'
-                    ? 'Security Portal'
-                    : 'Resident Portal'}
+                    ? 'Gatekeeper'
+                    : 'Resident App'}
                 </p>
               </div>
             </motion.div>
@@ -168,7 +272,7 @@ export function Sidebar() {
           variant="ghost"
           size="icon"
           onClick={() => setIsCollapsed(!isCollapsed)}
-          className="h-8 w-8 rounded-full hover:bg-gray-100"
+          className="h-8 w-8 rounded-full hover:bg-[#2d4a6f] text-white/70 hover:text-white"
         >
           {isCollapsed ? (
             <ChevronRight className="h-4 w-4" />
@@ -197,17 +301,17 @@ export function Sidebar() {
                   }
                 }}
                 className={cn(
-                  'flex items-center justify-between px-3 py-2.5 rounded-lg transition-all duration-200 group',
+                  'flex items-center justify-between px-3 py-2.5 rounded-xl transition-all duration-200 group',
                   isActive
-                    ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-md'
-                    : 'text-gray-700 hover:bg-gray-100'
+                    ? 'bg-gradient-to-r from-teal-500 to-cyan-500 text-white shadow-lg shadow-teal-500/30'
+                    : 'text-white/70 hover:bg-[#2d4a6f] hover:text-white'
                 )}
               >
                 <div className="flex items-center space-x-3 flex-1 min-w-0">
                   <Icon
                     className={cn(
                       'h-5 w-5 flex-shrink-0',
-                      isActive ? 'text-white' : 'text-gray-500 group-hover:text-gray-700'
+                      isActive ? 'text-white' : 'text-white/70 group-hover:text-white'
                     )}
                   />
                   <AnimatePresence>
@@ -225,7 +329,7 @@ export function Sidebar() {
                 </div>
 
                 {!isCollapsed && item.badge && (
-                  <span className="ml-auto flex-shrink-0 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full">
+                  <span className="ml-auto flex-shrink-0 bg-orange-500 text-white text-xs font-bold px-2 py-1 rounded-full">
                     {item.badge}
                   </span>
                 )}
@@ -233,7 +337,7 @@ export function Sidebar() {
                 {!isCollapsed && hasSubmenu && (
                   <ChevronRight
                     className={cn(
-                      'h-4 w-4 transition-transform duration-200 ml-auto',
+                      'h-4 w-4 transition-transform duration-200 ml-auto text-white/50',
                       isExpanded && 'rotate-90'
                     )}
                   />
@@ -261,8 +365,8 @@ export function Sidebar() {
                           className={cn(
                             'flex items-center space-x-3 px-3 py-2 rounded-lg text-sm transition-colors',
                             isSubActive
-                              ? 'bg-blue-50 text-blue-600 font-medium'
-                              : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                              ? 'bg-teal-500/20 text-teal-300 font-medium'
+                              : 'text-white/60 hover:bg-[#2d4a6f] hover:text-white'
                           )}
                         >
                           <SubIcon className="h-4 w-4" />
@@ -279,16 +383,16 @@ export function Sidebar() {
       </nav>
 
       {/* User Profile */}
-      <div className="p-4 border-t border-gray-200">
+      <div className="p-4 border-t border-[#2d4a6f]">
         <div
           className={cn(
-            'flex items-center p-3 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors',
+            'flex items-center p-3 rounded-xl bg-[#2d4a6f]/50 hover:bg-[#2d4a6f] transition-colors',
             isCollapsed && 'justify-center'
           )}
         >
-          <Avatar className="h-10 w-10 ring-2 ring-blue-100">
+          <Avatar className="h-10 w-10 ring-2 ring-teal-400/50">
             <AvatarImage src={user?.avatar} />
-            <AvatarFallback className="bg-gradient-to-br from-blue-600 to-purple-600 text-white font-semibold">
+            <AvatarFallback className="bg-gradient-to-br from-teal-400 to-cyan-500 text-white font-semibold">
               {user?.name?.charAt(0)}
             </AvatarFallback>
           </Avatar>
@@ -301,10 +405,10 @@ export function Sidebar() {
                 exit={{ opacity: 0, x: -10 }}
                 className="ml-3 flex-1 min-w-0"
               >
-                <p className="text-sm font-semibold text-gray-900 truncate">
+                <p className="text-sm font-semibold text-white truncate">
                   {user?.name}
                 </p>
-                <p className="text-xs text-gray-500 truncate">{user?.email}</p>
+                <p className="text-xs text-white/60 truncate">{user?.email}</p>
               </motion.div>
             )}
           </AnimatePresence>
@@ -314,7 +418,7 @@ export function Sidebar() {
               variant="ghost"
               size="icon"
               onClick={handleLogout}
-              className="ml-2 h-8 w-8 text-gray-500 hover:text-red-600 hover:bg-red-50"
+              className="ml-2 h-8 w-8 text-white/60 hover:text-red-400 hover:bg-red-500/20"
               title="Logout"
             >
               <LogOut className="h-4 w-4" />

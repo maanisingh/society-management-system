@@ -12,6 +12,7 @@ import {
   MapPin,
   Plus,
   CheckCircle,
+  CheckCircle2,
   XCircle,
   Dumbbell,
   Waves,
@@ -194,7 +195,8 @@ const pastBookings = [
   },
 ]
 
-function BookingDialog({ amenity }: { amenity: typeof amenities[0] }) {
+function BookingDialog({ amenity, onBookingComplete }: { amenity: typeof amenities[0], onBookingComplete?: (message: string) => void }) {
+  const [isOpen, setIsOpen] = useState(false)
   const [selectedDate, setSelectedDate] = useState('')
   const [startTime, setStartTime] = useState('')
   const [endTime, setEndTime] = useState('')
@@ -207,11 +209,20 @@ function BookingDialog({ amenity }: { amenity: typeof amenities[0] }) {
     return amenity.pricePerHour * hours
   }
 
+  const handleConfirmBooking = () => {
+    setIsOpen(false)
+    onBookingComplete?.(`${amenity.name} booked successfully!`)
+    // Reset form
+    setSelectedDate('')
+    setStartTime('')
+    setEndTime('')
+  }
+
   return (
-    <Dialog>
+    <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
         <Button
-          className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 gap-2"
+          className="w-full bg-gradient-to-r from-teal-500 to-cyan-500 hover:from-blue-700 hover:to-purple-700 gap-2"
           disabled={amenity.status !== 'available'}
         >
           {amenity.status === 'available' ? (
@@ -342,8 +353,8 @@ function BookingDialog({ amenity }: { amenity: typeof amenities[0] }) {
           </div>
 
           <div className="flex items-center justify-end gap-3 pt-2">
-            <Button variant="outline">Cancel</Button>
-            <Button className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 gap-2">
+            <Button variant="outline" onClick={() => setIsOpen(false)}>Cancel</Button>
+            <Button className="bg-gradient-to-r from-teal-500 to-cyan-500 hover:from-blue-700 hover:to-purple-700 gap-2" onClick={handleConfirmBooking}>
               <CheckCircle className="h-4 w-4" />
               Confirm Booking
             </Button>
@@ -356,8 +367,32 @@ function BookingDialog({ amenity }: { amenity: typeof amenities[0] }) {
 
 export default function AmenitiesPage() {
   const [activeTab, setActiveTab] = useState('amenities')
+  const [showSuccess, setShowSuccess] = useState<string | null>(null)
   const { user } = useAuthStore()
   const isAdmin = user?.role === 'admin'
+
+  const showNotification = (message: string) => {
+    setShowSuccess(message)
+    setTimeout(() => setShowSuccess(null), 3000)
+  }
+
+  const handleAddAmenity = () => {
+    showNotification('Amenity added successfully!')
+  }
+
+  const handleViewDetails = (bookingId: string) => {
+    showNotification(`Viewing booking ${bookingId}...`)
+  }
+
+  const handleModifyBooking = (bookingId: string) => {
+    showNotification(`Modifying booking ${bookingId}...`)
+  }
+
+  const handleCancelBooking = (bookingId: string) => {
+    if (confirm('Are you sure you want to cancel this booking?')) {
+      showNotification('Booking cancelled successfully!')
+    }
+  }
 
   const formatDate = (dateStr: string) => {
     const date = new Date(dateStr)
@@ -366,6 +401,21 @@ export default function AmenitiesPage() {
 
   return (
     <RoleGuard allowedRoles={['admin', 'resident']}>
+      {/* Success Notification */}
+      <AnimatePresence>
+        {showSuccess && (
+          <motion.div
+            initial={{ opacity: 0, y: -50 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -50 }}
+            className="fixed top-4 right-4 z-50 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg flex items-center gap-2"
+          >
+            <CheckCircle2 className="h-5 w-5" />
+            {showSuccess}
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       <div className="space-y-6">
         {/* Header */}
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
@@ -375,7 +425,7 @@ export default function AmenitiesPage() {
                 <Building className="h-6 w-6 text-white" />
               </div>
               <div>
-                <h1 className="text-2xl font-bold bg-gradient-to-r from-gray-900 to-gray-600 bg-clip-text text-transparent">
+                <h1 className="text-2xl font-bold text-[#1e3a5f]">
                   {isAdmin ? 'Amenities Management' : 'Amenities Booking'}
                 </h1>
                 <p className="text-muted-foreground text-sm">
@@ -387,7 +437,7 @@ export default function AmenitiesPage() {
             </div>
           </div>
           {isAdmin && (
-            <Button className="bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 gap-2 shadow-lg shadow-blue-500/25">
+            <Button className="bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 gap-2 shadow-lg shadow-teal-500/25" onClick={handleAddAmenity}>
               <Plus className="h-4 w-4" />
               Add Amenity
             </Button>
@@ -396,30 +446,34 @@ export default function AmenitiesPage() {
 
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="bg-transparent border-b w-full justify-start rounded-none h-auto p-0 space-x-6">
-            <TabsTrigger
-              value="amenities"
-              className="data-[state=active]:bg-transparent data-[state=active]:shadow-none border-b-2 border-transparent data-[state=active]:border-blue-600 rounded-none px-0 pb-3"
-            >
-              <Building className="h-4 w-4 mr-2" />
-              All Amenities
-            </TabsTrigger>
-            <TabsTrigger
-              value="bookings"
-              className="data-[state=active]:bg-transparent data-[state=active]:shadow-none border-b-2 border-transparent data-[state=active]:border-green-600 rounded-none px-0 pb-3"
-            >
-              <CalendarCheck className="h-4 w-4 mr-2" />
-              My Bookings
-              <Badge className="ml-2 bg-green-100 text-green-700">{upcomingBookings.length}</Badge>
-            </TabsTrigger>
-            <TabsTrigger
-              value="history"
-              className="data-[state=active]:bg-transparent data-[state=active]:shadow-none border-b-2 border-transparent data-[state=active]:border-gray-600 rounded-none px-0 pb-3"
-            >
-              <History className="h-4 w-4 mr-2" />
-              History
-            </TabsTrigger>
-          </TabsList>
+          <div className="overflow-x-auto -mx-3 sm:mx-0 px-3 sm:px-0">
+            <TabsList className="bg-transparent border-b w-max sm:w-full justify-start rounded-none h-auto p-0 space-x-4 sm:space-x-6">
+              <TabsTrigger
+                value="amenities"
+                className="data-[state=active]:bg-transparent data-[state=active]:shadow-none border-b-2 border-transparent data-[state=active]:border-blue-600 rounded-none px-0 pb-3 text-sm sm:text-base whitespace-nowrap"
+              >
+                <Building className="h-4 w-4 mr-1 sm:mr-2" />
+                <span className="hidden sm:inline">All Amenities</span>
+                <span className="sm:hidden">Amenities</span>
+              </TabsTrigger>
+              <TabsTrigger
+                value="bookings"
+                className="data-[state=active]:bg-transparent data-[state=active]:shadow-none border-b-2 border-transparent data-[state=active]:border-green-600 rounded-none px-0 pb-3 text-sm sm:text-base whitespace-nowrap"
+              >
+                <CalendarCheck className="h-4 w-4 mr-1 sm:mr-2" />
+                <span className="hidden sm:inline">My Bookings</span>
+                <span className="sm:hidden">Bookings</span>
+                <Badge className="ml-1 sm:ml-2 bg-green-100 text-green-700 text-xs">{upcomingBookings.length}</Badge>
+              </TabsTrigger>
+              <TabsTrigger
+                value="history"
+                className="data-[state=active]:bg-transparent data-[state=active]:shadow-none border-b-2 border-transparent data-[state=active]:border-gray-600 rounded-none px-0 pb-3 text-sm sm:text-base whitespace-nowrap"
+              >
+                <History className="h-4 w-4 mr-1 sm:mr-2" />
+                History
+              </TabsTrigger>
+            </TabsList>
+          </div>
 
           {/* Amenities Tab */}
           <TabsContent value="amenities" className="mt-6">
@@ -508,7 +562,7 @@ export default function AmenitiesPage() {
                           </div>
 
                           <div className="pt-2 border-t">
-                            <BookingDialog amenity={amenity} />
+                            <BookingDialog amenity={amenity} onBookingComplete={showNotification} />
                           </div>
                         </CardContent>
                       </Card>
@@ -572,16 +626,16 @@ export default function AmenitiesPage() {
                                 </Button>
                               </DropdownMenuTrigger>
                               <DropdownMenuContent align="end">
-                                <DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => handleViewDetails(booking.id)}>
                                   <Eye className="h-4 w-4 mr-2" />
                                   View Details
                                 </DropdownMenuItem>
-                                <DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => handleModifyBooking(booking.id)}>
                                   <Settings className="h-4 w-4 mr-2" />
                                   Modify Booking
                                 </DropdownMenuItem>
                                 <DropdownMenuSeparator />
-                                <DropdownMenuItem className="text-red-600">
+                                <DropdownMenuItem className="text-red-600" onClick={() => handleCancelBooking(booking.id)}>
                                   <XCircle className="h-4 w-4 mr-2" />
                                   Cancel Booking
                                 </DropdownMenuItem>

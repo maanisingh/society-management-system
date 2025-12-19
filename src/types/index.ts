@@ -165,3 +165,107 @@ export interface Vendor {
   status: 'active' | 'inactive'
   servicesProvided: string[]
 }
+
+// Tenant Types
+export interface Tenant {
+  id: string
+  name: string
+  email: string
+  phone: string
+  unit: string
+  block: string
+  floor: string
+  ownerName: string
+  ownerPhone: string
+  leaseStartDate: Date
+  leaseEndDate: Date
+  rentAmount: number
+  securityDeposit: number
+  maintenanceCharges: number
+  parkingSlot?: string
+  vehicleNumber?: string
+  familyMembers: number
+  status: 'active' | 'inactive' | 'notice_period'
+  documents?: string[]
+  emergencyContact?: string
+  createdAt: Date
+  updatedAt: Date
+}
+
+// Parking Types
+export interface ParkingSlot {
+  id: string
+  slotNumber: string
+  type: 'two_wheeler' | 'four_wheeler' | 'reserved' | 'visitor'
+  block: string
+  floor: string
+  assignedTo?: string
+  assignedUnit?: string
+  vehicleNumber?: string
+  monthlyCharge: number
+  status: 'available' | 'occupied' | 'reserved' | 'maintenance'
+  createdAt: Date
+}
+
+export interface ParkingPayment {
+  id: string
+  slotId: string
+  tenantId?: string
+  ownerId?: string
+  amount: number
+  month: string
+  year: number
+  paymentDate?: Date
+  dueDate: Date
+  status: 'paid' | 'pending' | 'overdue'
+  paymentMethod?: 'online' | 'cash' | 'cheque' | 'upi'
+  transactionId?: string
+}
+
+// Income & Expense Types
+export interface Income {
+  id: string
+  category: 'maintenance' | 'parking' | 'amenity' | 'penalty' | 'deposit' | 'event' | 'other'
+  description: string
+  amount: number
+  date: Date
+  receivedFrom: string
+  unit?: string
+  paymentMethod: 'online' | 'cash' | 'cheque' | 'upi'
+  transactionId?: string
+  status: 'received' | 'pending'
+}
+
+export interface Expense {
+  id: string
+  category: 'salary' | 'utilities' | 'maintenance' | 'security' | 'housekeeping' | 'repairs' | 'vendor' | 'other'
+  description: string
+  amount: number
+  date: Date
+  paidTo: string
+  vendorId?: string
+  invoiceNumber?: string
+  paymentMethod: 'online' | 'cash' | 'cheque' | 'upi'
+  status: 'paid' | 'pending' | 'approved'
+  approvedBy?: string
+}
+
+// Vendor Payment Types
+export interface VendorPayment {
+  id: string
+  vendorId: string
+  vendorName: string
+  invoiceNumber: string
+  invoiceDate: Date
+  dueDate: Date
+  amount: number
+  gstAmount: number
+  totalAmount: number
+  description: string
+  category: string
+  paymentDate?: Date
+  paymentMethod?: 'online' | 'cash' | 'cheque' | 'upi'
+  status: 'pending' | 'approved' | 'paid' | 'rejected'
+  approvedBy?: string
+  remarks?: string
+}

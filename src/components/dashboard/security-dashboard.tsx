@@ -1,6 +1,8 @@
 'use client'
 
-import { motion } from 'framer-motion'
+import { useState } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
+import { useRouter } from 'next/navigation'
 import {
   Shield,
   Users,
@@ -9,88 +11,91 @@ import {
   AlertTriangle,
   Clock,
   CheckCircle,
+  CheckCircle2,
   XCircle,
   Bell,
   Phone,
+  QrCode,
+  MapPin,
+  Eye,
+  UserCheck,
+  Calendar,
+  TrendingUp,
+  Activity,
+  Building,
 } from 'lucide-react'
-import { Card } from '@/components/ui/card'
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  LineChart,
+  Line,
+} from 'recharts'
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import Link from 'next/link'
+import { useAuthStore } from '@/lib/stores/auth-store'
 
-// Mock data - replace with actual API calls
-const securityStats = [
-  {
-    title: "Today's Visitors",
-    value: '48',
-    subtitle: '12 currently inside',
-    icon: Users,
-    color: 'blue',
-  },
-  {
-    title: 'Pending Approvals',
-    value: '5',
-    subtitle: 'Vehicles awaiting entry',
-    icon: Car,
-    color: 'orange',
-    action: 'Review',
-  },
-  {
-    title: 'Parcels Received',
-    value: '23',
-    subtitle: '8 pending pickup',
-    icon: Package,
-    color: 'green',
-  },
-  {
-    title: 'Active Alerts',
-    value: '1',
-    subtitle: 'Emergency protocol active',
-    icon: AlertTriangle,
-    color: 'red',
-  },
+// Daily visitor data for chart
+const visitorChartData = [
+  { day: 'Sun', visitors: 120, avg: 150 },
+  { day: 'Mon', visitors: 280, avg: 150 },
+  { day: 'Tue', visitors: 320, avg: 150 },
+  { day: 'Wed', visitors: 250, avg: 150 },
+  { day: 'Thu', visitors: 180, avg: 150 },
+  { day: 'Fri', visitors: 420, avg: 150 },
+  { day: 'Sat', visitors: 380, avg: 150 },
 ]
 
+// ADDA Gatekeeper features (page 31)
+const gatekeeperFeatures = [
+  { icon: Users, label: 'Visitor Management', count: '48', subtext: 'Today', color: 'bg-blue-500', href: '/dashboard/security/visitors' },
+  { icon: UserCheck, label: 'Staff Attendance', count: '12', subtext: 'Present', color: 'bg-purple-500', href: '/dashboard/security/visitors' },
+  { icon: Package, label: 'Parcel Tracking', count: '8', subtext: 'Pending', color: 'bg-orange-500', href: '/dashboard/security/parcels' },
+  { icon: AlertTriangle, label: 'Incident Report', count: '2', subtext: 'Open', color: 'bg-red-500', href: '/dashboard/admin/complaints' },
+  { icon: Car, label: 'Parking', count: '145', subtext: 'Occupied', color: 'bg-green-500', href: '/dashboard/security/vehicles' },
+  { icon: Shield, label: 'Guard Patrol', count: '4', subtext: 'Active', color: 'bg-teal-500', href: '/dashboard/security/visitors' },
+]
+
+// Recent visitors - ADDA style
 const recentVisitors = [
   {
     id: 1,
-    name: 'Rajesh Kumar',
-    unit: 'A-205',
-    purpose: 'Personal Visit',
-    time: '10:30 AM',
-    status: 'inside',
-    phone: '+91 98765 43210',
+    name: 'Cab - Uber',
+    visitor: 'Dominic Marshall',
+    unit: 'A-04',
+    time: '3:00 pm',
+    status: 'approved',
+    approvedBy: 'Meenakshi Menon',
   },
   {
     id: 2,
-    name: 'Priya Sharma',
-    unit: 'B-101',
-    purpose: 'Delivery',
-    time: '10:15 AM',
-    status: 'exited',
-    phone: '+91 98765 43211',
+    name: 'Home service - Urban Company',
+    visitor: 'Beena shah',
+    unit: 'B-102',
+    time: '5:30 pm',
+    status: 'approved',
+    approvedBy: 'Saleem',
   },
   {
     id: 3,
-    name: 'Amit Verma',
-    unit: 'C-305',
-    purpose: 'Maintenance Work',
-    time: '09:45 AM',
-    status: 'inside',
-    phone: '+91 98765 43212',
-  },
-  {
-    id: 4,
-    name: 'Sneha Patel',
-    unit: 'A-102',
-    purpose: 'Guest',
-    time: '09:20 AM',
-    status: 'exited',
-    phone: '+91 98765 43213',
+    name: 'Guest',
+    visitor: 'Natalia Shustova',
+    unit: 'C-201',
+    time: '9:00 pm',
+    status: 'approved',
+    approvedBy: 'Mumtaz',
   },
 ]
 
-const pendingVehicles = [
+// Pending approvals
+const pendingApprovals = [
   {
     id: 1,
     vehicle: 'MH 02 AB 1234',
@@ -107,14 +112,6 @@ const pendingVehicles = [
     type: 'Delivery Van',
     time: '12 mins ago',
   },
-  {
-    id: 3,
-    vehicle: 'MH 12 EF 9012',
-    unit: 'C-105',
-    resident: 'Priya Desai',
-    type: 'Guest Vehicle',
-    time: '18 mins ago',
-  },
 ]
 
 const emergencyContacts = [
@@ -122,27 +119,6 @@ const emergencyContacts = [
   { name: 'Fire Brigade', number: '101', icon: AlertTriangle },
   { name: 'Ambulance', number: '102', icon: Phone },
   { name: 'Society Admin', number: '+91 98765 00000', icon: Phone },
-]
-
-const recentAlerts = [
-  {
-    id: 1,
-    type: 'warning',
-    message: 'Unauthorized vehicle detected at Gate 2',
-    time: '2 hours ago',
-  },
-  {
-    id: 2,
-    type: 'info',
-    message: 'Fire drill scheduled for tomorrow at 3 PM',
-    time: '5 hours ago',
-  },
-  {
-    id: 3,
-    type: 'success',
-    message: 'All gates security check completed successfully',
-    time: '1 day ago',
-  },
 ]
 
 const containerVariants = {
@@ -159,309 +135,330 @@ const itemVariants = {
 }
 
 export function SecurityDashboard() {
+  const router = useRouter()
+  const { user } = useAuthStore()
+  const [showSuccess, setShowSuccess] = useState<string | null>(null)
+
+  const showNotification = (message: string) => {
+    setShowSuccess(message)
+    setTimeout(() => setShowSuccess(null), 3000)
+  }
+
+  const handleApprove = (id: number) => {
+    showNotification('Vehicle approved successfully!')
+  }
+
+  const handleReject = (id: number) => {
+    showNotification('Vehicle entry rejected')
+  }
+
   return (
     <motion.div
       variants={containerVariants}
       initial="hidden"
       animate="visible"
-      className="space-y-6"
+      className="space-y-4 sm:space-y-6"
     >
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Security Dashboard</h1>
-          <p className="text-gray-600 mt-1">
-            Monitor and manage society security.
-          </p>
-        </div>
-        <div className="flex gap-3">
-          <Link href="/dashboard/security/visitors">
-            <Button variant="outline">Check-in Visitor</Button>
-          </Link>
-          <Link href="/dashboard/security/vehicles">
-            <Button className="bg-gradient-to-r from-blue-600 to-purple-600 text-white">
-              Register Vehicle
-            </Button>
-          </Link>
-        </div>
-      </div>
+      {/* Success Notification */}
+      <AnimatePresence>
+        {showSuccess && (
+          <motion.div
+            initial={{ opacity: 0, y: -50 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -50 }}
+            className="fixed top-4 right-4 z-50 bg-teal-500 text-white px-6 py-3 rounded-lg shadow-lg flex items-center gap-2"
+          >
+            <CheckCircle2 className="h-5 w-5" />
+            {showSuccess}
+          </motion.div>
+        )}
+      </AnimatePresence>
 
-      {/* Stats Grid */}
-      <motion.div
-        variants={containerVariants}
-        className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6"
-      >
-        {securityStats.map((stat, index) => {
-          const Icon = stat.icon
+      {/* Welcome Header - ADDA Gatekeeper Style */}
+      <motion.div variants={itemVariants} className="bg-gradient-to-r from-[#1e3a5f] to-[#0f766e] rounded-2xl p-4 sm:p-6 text-white">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div className="flex items-center gap-4">
+            <Avatar className="h-14 w-14 ring-4 ring-white/20">
+              <AvatarFallback className="bg-gradient-to-br from-teal-400 to-emerald-500 text-white text-xl font-bold">
+                {user?.name?.charAt(0) || 'G'}
+              </AvatarFallback>
+            </Avatar>
+            <div>
+              <p className="text-teal-300 text-sm">Welcome!</p>
+              <h1 className="text-2xl sm:text-3xl font-bold">{user?.name || 'Security'}</h1>
+              <p className="text-white/70 text-sm">ADDA Gatekeeper</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <Button className="bg-white/20 hover:bg-white/30 text-white" onClick={() => router.push('/dashboard/security/visitors')}>
+              <QrCode className="h-4 w-4 mr-2" />
+              Scan QR
+            </Button>
+          </div>
+        </div>
+
+        {/* Quick Stats Row */}
+        <div className="grid grid-cols-3 gap-3 mt-4">
+          <div className="bg-white/10 rounded-xl p-3 text-center">
+            <p className="text-2xl font-bold">8</p>
+            <p className="text-xs text-white/70">Visitors Today</p>
+          </div>
+          <div className="bg-white/10 rounded-xl p-3 text-center">
+            <p className="text-2xl font-bold">40</p>
+            <p className="text-xs text-white/70">Still Inside</p>
+          </div>
+          <div className="bg-white/10 rounded-xl p-3 text-center">
+            <p className="text-2xl font-bold">0</p>
+            <p className="text-xs text-white/70">Parcel</p>
+          </div>
+        </div>
+      </motion.div>
+
+      {/* Gatekeeper Features Grid - ADDA Style */}
+      <motion.div variants={containerVariants} className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+        {gatekeeperFeatures.map((feature, index) => {
+          const Icon = feature.icon
           return (
             <motion.div key={index} variants={itemVariants}>
-              <Card className="p-6 hover:shadow-lg transition-shadow duration-200 border-0 shadow-sm">
-                <div className="flex items-start justify-between mb-4">
-                  <div
-                    className={`p-3 rounded-xl ${
-                      stat.color === 'blue'
-                        ? 'bg-blue-100'
-                        : stat.color === 'green'
-                        ? 'bg-green-100'
-                        : stat.color === 'red'
-                        ? 'bg-red-100'
-                        : 'bg-orange-100'
-                    }`}
-                  >
-                    <Icon
-                      className={`h-6 w-6 ${
-                        stat.color === 'blue'
-                          ? 'text-blue-600'
-                          : stat.color === 'green'
-                          ? 'text-green-600'
-                          : stat.color === 'red'
-                          ? 'text-red-600'
-                          : 'text-orange-600'
-                      }`}
-                    />
-                  </div>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-600 mb-1">
-                    {stat.title}
-                  </p>
-                  <h3 className="text-2xl font-bold text-gray-900 mb-1">
-                    {stat.value}
-                  </h3>
-                  <p className="text-sm text-gray-500">{stat.subtitle}</p>
-                  {stat.action && (
-                    <Button
-                      className="mt-3 w-full bg-orange-600 hover:bg-orange-700"
-                      size="sm"
-                    >
-                      {stat.action}
-                    </Button>
-                  )}
-                </div>
-              </Card>
+              <Link href={feature.href}>
+                <Card className="border-0 shadow-md hover:shadow-lg transition-all cursor-pointer h-full">
+                  <CardContent className="p-4 text-center">
+                    <div className={`w-12 h-12 rounded-xl ${feature.color} mx-auto mb-3 flex items-center justify-center`}>
+                      <Icon className="h-6 w-6 text-white" />
+                    </div>
+                    <p className="text-xs text-gray-500 mb-1">{feature.label}</p>
+                    <p className="text-xl font-bold text-gray-900">{feature.count}</p>
+                    <p className="text-[10px] text-gray-400">{feature.subtext}</p>
+                  </CardContent>
+                </Card>
+              </Link>
             </motion.div>
           )
         })}
       </motion.div>
 
-      {/* Main Content Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Recent Visitors */}
+      {/* Daily Visitor Chart & Recent Visitors */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+        {/* Daily Visitor-In Chart - ADDA Style */}
         <motion.div variants={itemVariants}>
-          <Card className="p-6 border-0 shadow-sm">
-            <div className="flex items-center justify-between mb-6">
-              <div>
-                <h3 className="text-lg font-semibold text-gray-900">
-                  Recent Visitors
-                </h3>
-                <p className="text-sm text-gray-600">Today's visitor log</p>
-              </div>
-              <Users className="h-5 w-5 text-blue-600" />
-            </div>
-            <div className="space-y-4 max-h-[400px] overflow-y-auto">
-              {recentVisitors.map((visitor) => (
-                <div
-                  key={visitor.id}
-                  className="p-4 rounded-lg border border-gray-100 hover:border-blue-200 transition-colors"
-                >
-                  <div className="flex items-start justify-between mb-2">
-                    <div>
-                      <h4 className="font-semibold text-gray-900">
-                        {visitor.name}
-                      </h4>
-                      <p className="text-sm text-gray-600">
-                        Unit: {visitor.unit} • {visitor.purpose}
-                      </p>
-                      <p className="text-xs text-gray-500 mt-1">
-                        {visitor.phone}
-                      </p>
-                    </div>
-                    <Badge
-                      variant={
-                        visitor.status === 'inside' ? 'default' : 'secondary'
-                      }
-                      className={
-                        visitor.status === 'inside'
-                          ? 'bg-green-100 text-green-700'
-                          : ''
-                      }
-                    >
-                      {visitor.status}
-                    </Badge>
-                  </div>
-                  <div className="flex items-center justify-between mt-3">
-                    <div className="flex items-center text-xs text-gray-500">
-                      <Clock className="h-3 w-3 mr-1" />
-                      {visitor.time}
-                    </div>
-                    {visitor.status === 'inside' && (
-                      <Button size="sm" variant="outline">
-                        Check Out
-                      </Button>
-                    )}
-                  </div>
+          <Card className="border-0 shadow-md">
+            <CardHeader className="pb-2">
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle className="text-lg font-bold text-gray-800">Daily Visitor-In</CardTitle>
+                  <CardDescription>Visitors Today: 8 | Still Inside: 40</CardDescription>
                 </div>
-              ))}
-            </div>
-            <Link href="/dashboard/security/visitors">
-              <Button variant="outline" className="w-full mt-4">
-                View All Visitors
-              </Button>
-            </Link>
+                <div className="flex items-center gap-2">
+                  <Button variant="outline" size="sm" className="text-xs bg-teal-50 border-teal-200 text-teal-600">
+                    Check-Out
+                  </Button>
+                  <Badge variant="outline" className="bg-orange-50 text-orange-600 border-orange-200">
+                    Parcel: 0
+                  </Badge>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <ResponsiveContainer width="100%" height={200}>
+                <LineChart data={visitorChartData}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                  <XAxis dataKey="day" stroke="#6b7280" fontSize={12} />
+                  <YAxis stroke="#6b7280" fontSize={12} />
+                  <Tooltip />
+                  <Line type="monotone" dataKey="visitors" stroke="#3b82f6" strokeWidth={2} dot={{ fill: '#3b82f6' }} />
+                  <Line type="monotone" dataKey="avg" stroke="#10b981" strokeWidth={2} strokeDasharray="5 5" />
+                </LineChart>
+              </ResponsiveContainer>
+              <div className="flex items-center justify-center gap-6 mt-3 text-sm">
+                <div className="flex items-center gap-2">
+                  <span className="w-3 h-3 rounded-full bg-blue-500"></span>
+                  <span className="text-gray-600">Visitors</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="w-3 h-0.5 bg-green-500"></span>
+                  <span className="text-gray-600">Average</span>
+                </div>
+              </div>
+            </CardContent>
           </Card>
         </motion.div>
 
+        {/* Recent Visitors - ADDA Style */}
+        <motion.div variants={itemVariants}>
+          <Card className="border-0 shadow-md h-full">
+            <CardHeader className="pb-2">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-lg font-bold text-gray-800">Recent Visitors</CardTitle>
+                <div className="flex gap-2">
+                  <Badge variant="outline">My Visitors</Badge>
+                  <Badge variant="secondary">Parcels</Badge>
+                  <Badge variant="secondary">Helpers</Badge>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3 max-h-[280px] overflow-y-auto">
+                {recentVisitors.map((visitor) => (
+                  <div
+                    key={visitor.id}
+                    className="p-3 rounded-xl border border-gray-100 hover:border-blue-200 transition-colors"
+                  >
+                    <div className="flex items-start justify-between">
+                      <div className="flex items-start gap-3">
+                        <Avatar className="h-10 w-10">
+                          <AvatarFallback className="bg-gray-100 text-gray-600 text-xs">
+                            {visitor.visitor.charAt(0)}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div>
+                          <p className="font-semibold text-gray-900">{visitor.name}</p>
+                          <p className="text-sm text-blue-600">{visitor.visitor} • {visitor.time}</p>
+                          <p className="text-xs text-green-600 flex items-center gap-1 mt-1">
+                            <CheckCircle className="h-3 w-3" />
+                            Approved by {visitor.approvedBy}
+                          </p>
+                        </div>
+                      </div>
+                      <Button variant="ghost" size="sm" className="text-xs text-gray-500">
+                        Report wrong Entry
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <Link href="/dashboard/security/visitors">
+                <Button variant="outline" className="w-full mt-4 border-teal-200 text-teal-600 hover:bg-teal-50">
+                  View All Visitors
+                </Button>
+              </Link>
+            </CardContent>
+          </Card>
+        </motion.div>
+      </div>
+
+      {/* Pending Approvals & Emergency Contacts */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
         {/* Pending Vehicle Approvals */}
         <motion.div variants={itemVariants}>
-          <Card className="p-6 border-0 shadow-sm">
-            <div className="flex items-center justify-between mb-6">
-              <div>
-                <h3 className="text-lg font-semibold text-gray-900">
-                  Pending Vehicle Approvals
-                </h3>
-                <p className="text-sm text-gray-600">Vehicles awaiting entry</p>
+          <Card className="border-0 shadow-md">
+            <CardHeader className="pb-2">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-lg font-bold text-gray-800">Pending Approvals</CardTitle>
+                <Badge className="bg-orange-100 text-orange-600">{pendingApprovals.length} Pending</Badge>
               </div>
-              <Car className="h-5 w-5 text-orange-600" />
-            </div>
-            <div className="space-y-4">
-              {pendingVehicles.map((vehicle) => (
-                <div
-                  key={vehicle.id}
-                  className="p-4 rounded-lg border border-orange-100 bg-orange-50/30 hover:border-orange-300 transition-colors"
-                >
-                  <div className="flex items-start justify-between mb-3">
-                    <div>
-                      <h4 className="font-semibold text-gray-900">
-                        {vehicle.vehicle}
-                      </h4>
-                      <p className="text-sm text-gray-600">
-                        Unit: {vehicle.unit} • {vehicle.resident}
-                      </p>
-                      <Badge variant="outline" className="mt-2">
-                        {vehicle.type}
-                      </Badge>
-                    </div>
-                  </div>
-                  <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-200">
-                    <div className="flex items-center text-xs text-gray-500">
-                      <Clock className="h-3 w-3 mr-1" />
-                      {vehicle.time}
-                    </div>
-                    <div className="flex gap-2">
-                      <Button size="sm" variant="outline">
-                        <XCircle className="h-4 w-4 mr-1" />
-                        Reject
-                      </Button>
-                      <Button size="sm" className="bg-green-600 hover:bg-green-700">
-                        <CheckCircle className="h-4 w-4 mr-1" />
-                        Approve
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-            <Link href="/dashboard/security/vehicles">
-              <Button variant="outline" className="w-full mt-4">
-                View All Vehicles
-              </Button>
-            </Link>
-          </Card>
-        </motion.div>
-      </div>
-
-      {/* Emergency Contacts & Recent Alerts */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Emergency Contacts */}
-        <motion.div variants={itemVariants}>
-          <Card className="p-6 border-0 shadow-sm bg-gradient-to-br from-red-50 to-orange-50">
-            <div className="flex items-center justify-between mb-6">
-              <div>
-                <h3 className="text-lg font-semibold text-gray-900">
-                  Emergency Contacts
-                </h3>
-                <p className="text-sm text-gray-600">Quick access numbers</p>
-              </div>
-              <Phone className="h-5 w-5 text-red-600" />
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {emergencyContacts.map((contact, index) => {
-                const Icon = contact.icon
-                return (
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {pendingApprovals.map((item) => (
                   <div
-                    key={index}
-                    className="p-4 bg-white rounded-lg border border-gray-200 hover:shadow-md transition-shadow"
+                    key={item.id}
+                    className="p-4 rounded-xl border border-orange-100 bg-orange-50/30 hover:border-orange-300 transition-colors"
                   >
-                    <div className="flex items-center space-x-3">
-                      <div className="p-2 bg-red-100 rounded-lg">
-                        <Icon className="h-5 w-5 text-red-600" />
-                      </div>
+                    <div className="flex items-start justify-between mb-3">
                       <div>
-                        <p className="text-sm font-medium text-gray-900">
-                          {contact.name}
+                        <div className="flex items-center gap-2">
+                          <Car className="h-4 w-4 text-orange-600" />
+                          <h4 className="font-semibold text-gray-900">{item.vehicle}</h4>
+                        </div>
+                        <p className="text-sm text-gray-600">
+                          Unit: {item.unit} • {item.resident}
                         </p>
-                        <a
-                          href={`tel:${contact.number}`}
-                          className="text-lg font-bold text-blue-600 hover:text-blue-700"
-                        >
-                          {contact.number}
-                        </a>
+                        <Badge variant="outline" className="mt-2 text-xs">{item.type}</Badge>
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-between pt-3 border-t border-gray-200">
+                      <div className="flex items-center text-xs text-gray-500">
+                        <Clock className="h-3 w-3 mr-1" />
+                        {item.time}
+                      </div>
+                      <div className="flex gap-2">
+                        <Button size="sm" variant="outline" className="text-red-600 border-red-200 hover:bg-red-50" onClick={() => handleReject(item.id)}>
+                          <XCircle className="h-4 w-4 mr-1" />
+                          Reject
+                        </Button>
+                        <Button size="sm" className="bg-green-600 hover:bg-green-700 text-white" onClick={() => handleApprove(item.id)}>
+                          <CheckCircle className="h-4 w-4 mr-1" />
+                          Approve
+                        </Button>
                       </div>
                     </div>
                   </div>
-                )
-              })}
-            </div>
+                ))}
+              </div>
+              <Link href="/dashboard/security/vehicles">
+                <Button variant="outline" className="w-full mt-4">
+                  View All Vehicles
+                </Button>
+              </Link>
+            </CardContent>
           </Card>
         </motion.div>
 
-        {/* Recent Alerts */}
+        {/* Emergency Contacts - ADDA Style */}
         <motion.div variants={itemVariants}>
-          <Card className="p-6 border-0 shadow-sm">
-            <div className="flex items-center justify-between mb-6">
-              <div>
-                <h3 className="text-lg font-semibold text-gray-900">
-                  Recent Alerts
-                </h3>
-                <p className="text-sm text-gray-600">System notifications</p>
+          <Card className="border-0 shadow-md bg-gradient-to-br from-red-50 to-orange-50">
+            <CardHeader className="pb-2">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-lg font-bold text-gray-800">Emergency Contacts</CardTitle>
+                <Phone className="h-5 w-5 text-red-600" />
               </div>
-              <Bell className="h-5 w-5 text-purple-600" />
-            </div>
-            <div className="space-y-4">
-              {recentAlerts.map((alert) => (
-                <div
-                  key={alert.id}
-                  className="p-4 rounded-lg border border-gray-100 hover:border-blue-200 transition-colors"
-                >
-                  <div className="flex items-start space-x-3">
-                    <div
-                      className={`flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center ${
-                        alert.type === 'warning'
-                          ? 'bg-orange-100'
-                          : alert.type === 'success'
-                          ? 'bg-green-100'
-                          : 'bg-blue-100'
-                      }`}
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-2 gap-3">
+                {emergencyContacts.map((contact, index) => {
+                  const Icon = contact.icon
+                  return (
+                    <a
+                      key={index}
+                      href={`tel:${contact.number}`}
+                      className="p-4 bg-white rounded-xl border border-gray-200 hover:shadow-md transition-all"
                     >
-                      {alert.type === 'warning' ? (
-                        <AlertTriangle className="h-5 w-5 text-orange-600" />
-                      ) : alert.type === 'success' ? (
-                        <CheckCircle className="h-5 w-5 text-green-600" />
-                      ) : (
-                        <Bell className="h-5 w-5 text-blue-600" />
-                      )}
-                    </div>
-                    <div className="flex-1">
-                      <p className="text-sm text-gray-900">{alert.message}</p>
-                      <p className="text-xs text-gray-400 mt-1">{alert.time}</p>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 bg-red-100 rounded-lg">
+                          <Icon className="h-5 w-5 text-red-600" />
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium text-gray-900">{contact.name}</p>
+                          <p className="text-lg font-bold text-blue-600">{contact.number}</p>
+                        </div>
+                      </div>
+                    </a>
+                  )
+                })}
+              </div>
+            </CardContent>
           </Card>
         </motion.div>
       </div>
+
+      {/* Quick Actions Row */}
+      <motion.div variants={itemVariants}>
+        <Card className="border-0 shadow-md">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-lg font-bold text-gray-800">Quick Actions</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              <Button variant="outline" className="h-auto py-4 flex-col gap-2" onClick={() => router.push('/dashboard/security/visitors')}>
+                <Users className="h-6 w-6 text-blue-600" />
+                <span className="text-sm">Check-in Visitor</span>
+              </Button>
+              <Button variant="outline" className="h-auto py-4 flex-col gap-2" onClick={() => router.push('/dashboard/security/vehicles')}>
+                <Car className="h-6 w-6 text-green-600" />
+                <span className="text-sm">Register Vehicle</span>
+              </Button>
+              <Button variant="outline" className="h-auto py-4 flex-col gap-2" onClick={() => router.push('/dashboard/security/parcels')}>
+                <Package className="h-6 w-6 text-orange-600" />
+                <span className="text-sm">Log Parcel</span>
+              </Button>
+              <Button variant="outline" className="h-auto py-4 flex-col gap-2" onClick={() => router.push('/dashboard/admin/complaints')}>
+                <AlertTriangle className="h-6 w-6 text-red-600" />
+                <span className="text-sm">Report Incident</span>
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </motion.div>
     </motion.div>
   )
 }

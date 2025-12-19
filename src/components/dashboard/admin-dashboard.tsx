@@ -1,7 +1,8 @@
 'use client'
 
 import { useState } from 'react'
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
+import { useRouter } from 'next/navigation'
 import {
   Users,
   TrendingUp,
@@ -27,6 +28,16 @@ import {
   MoreHorizontal,
   ChevronRight,
   Sparkles,
+  Clock,
+  CreditCard,
+  ClipboardList,
+  UserCheck,
+  TrendingDown,
+  UserPlus,
+  UserMinus,
+  UserX,
+  Shield,
+  ClipboardCheck,
 } from 'lucide-react'
 import {
   AreaChart,
@@ -48,79 +59,61 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
+import { useAuthStore } from '@/lib/stores/auth-store'
 
-const revenueData = [
-  { month: 'Jan', revenue: 245000, collected: 220000, pending: 25000 },
-  { month: 'Feb', revenue: 252000, collected: 235000, pending: 17000 },
-  { month: 'Mar', revenue: 248000, collected: 240000, pending: 8000 },
-  { month: 'Apr', revenue: 261000, collected: 250000, pending: 11000 },
-  { month: 'May', revenue: 255000, collected: 248000, pending: 7000 },
-  { month: 'Jun', revenue: 267000, collected: 260000, pending: 7000 },
+// Income tracker data - matches ADDA design
+const incomeData = [
+  { name: 'Collected', value: 145867, color: '#3b82f6' },
+  { name: 'Balance', value: 45867, color: '#ef4444' },
 ]
 
-const unitStatusData = [
-  { name: 'Occupied', value: 145, color: '#22c55e' },
-  { name: 'Vacant', value: 23, color: '#ef4444' },
-  { name: 'Under Maintenance', value: 8, color: '#f59e0b' },
-  { name: 'Reserved/Sold', value: 4, color: '#3b82f6' },
+// Monthly revenue data
+const monthlyData = [
+  { month: 'Oct', amount: 123234 },
+  { month: 'Nov', amount: 158982 },
+  { month: 'Dec', amount: 154651 },
 ]
 
-const complaintData = [
-  { category: 'Plumbing', count: 12, color: '#3b82f6' },
-  { category: 'Electrical', count: 8, color: '#f59e0b' },
-  { category: 'Cleaning', count: 15, color: '#22c55e' },
-  { category: 'Security', count: 6, color: '#ef4444' },
-  { category: 'Other', count: 9, color: '#8b5cf6' },
+// Helpdesk tickets data - matches ADDA bar chart
+const helpdeskData = [
+  { month: 'Oct', open: 45, resolved: 38 },
+  { month: 'Nov', open: 52, resolved: 48 },
+  { month: 'Dec', open: 35, resolved: 42 },
+  { month: 'Jan', open: 28, resolved: 22 },
 ]
 
-const stats = [
-  {
-    title: 'Total Units',
-    value: '180',
-    subtitle: '145 Occupied • 23 Vacant',
-    change: '+4 this month',
-    trend: 'up',
-    icon: Building2,
-    gradient: 'from-blue-500 to-blue-600',
-    bgGradient: 'from-blue-50 to-blue-100',
-  },
-  {
-    title: 'Monthly Collection',
-    value: '₹2,60,000',
-    subtitle: '₹7,000 Pending',
-    change: '+8.2%',
-    trend: 'up',
-    icon: DollarSign,
-    gradient: 'from-green-500 to-emerald-600',
-    bgGradient: 'from-green-50 to-emerald-100',
-  },
-  {
-    title: 'Open Complaints',
-    value: '23',
-    subtitle: '8 High Priority',
-    change: '-15% resolved',
-    trend: 'down',
-    icon: AlertCircle,
-    gradient: 'from-orange-500 to-red-500',
-    bgGradient: 'from-orange-50 to-red-100',
-  },
-  {
-    title: "Today's Visitors",
-    value: '48',
-    subtitle: '12 Currently Inside',
-    change: '+5 from yesterday',
-    trend: 'up',
-    icon: Users,
-    gradient: 'from-purple-500 to-pink-500',
-    bgGradient: 'from-purple-50 to-pink-100',
-  },
+// Expense data
+const expenseData = [
+  { month: 'Budget', amount: 250000 },
+  { month: 'Expense', amount: 185000 },
 ]
 
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: { staggerChildren: 0.08 },
+  },
+}
+
+const itemVariants = {
+  hidden: { y: 20, opacity: 0 },
+  visible: { y: 0, opacity: 1 },
+}
+
+// Quick action buttons
 const quickActions = [
-  { icon: FileText, label: 'Generate Bills', color: 'bg-blue-500', href: '/dashboard/financial/billing' },
-  { icon: Send, label: 'Send Notices', color: 'bg-purple-500', href: '/dashboard/residents/notices' },
-  { icon: Users, label: 'Add Visitor', color: 'bg-green-500', href: '/dashboard/security/visitors' },
-  { icon: Wrench, label: 'Maintenance', color: 'bg-orange-500', href: '/dashboard/admin/complaints' },
+  { icon: Bell, label: 'Broadcast', description: 'App Notification', color: 'bg-blue-500', href: '/dashboard/residents/notices' },
+  { icon: Send, label: 'Announcement', description: 'Post to residents', color: 'bg-purple-500', href: '/dashboard/residents/notices' },
+  { icon: MessageSquare, label: 'Survey', description: 'Create questions', color: 'bg-green-500', href: '/dashboard/residents/events' },
+]
+
+// Amenities data
+const amenities = [
+  { name: 'Squash Court', status: true },
+  { name: 'Fitness Center', status: true },
+  { name: 'Swimming Pool', status: false },
+  { name: 'Clubhouse', status: true },
 ]
 
 const recentActivities = [
@@ -129,7 +122,7 @@ const recentActivities = [
     type: 'payment',
     user: 'Rajesh Kumar',
     unit: 'A-205',
-    action: 'Paid maintenance of ₹15,000',
+    action: 'Paid maintenance of Rs. 15,000',
     time: '5 min ago',
     status: 'success',
     avatar: 'RK',
@@ -164,131 +157,176 @@ const recentActivities = [
     status: 'success',
     avatar: 'AP',
   },
-  {
-    id: 5,
-    type: 'payment',
-    user: 'Neha Gupta',
-    unit: 'A-108',
-    action: 'Payment overdue - ₹22,000 pending',
-    time: '3 hours ago',
-    status: 'error',
-    avatar: 'NG',
-  },
 ]
 
-const upcomingEvents = [
-  { name: 'Society AGM', date: 'Jan 15', time: '6:00 PM', attendees: 45 },
-  { name: 'Makar Sankranti', date: 'Jan 14', time: '4:00 PM', attendees: 120 },
-  { name: 'Yoga Workshop', date: 'Jan 20', time: '7:00 AM', attendees: 25 },
-]
-
-const containerVariants = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: { staggerChildren: 0.08 },
-  },
+// Community Overview Data
+const communityOverview = {
+  totalUnits: 450,
+  occupiedUnits: 412,
+  vacantUnits: 38,
+  totalUsers: 1003,
+  activeUsers: 856,
+  inactiveUsers: 115,
+  pendingApprovalUsers: 32,
+  owners: 412,
+  tenants: 444,
+  neverLoggedIn: 147,
 }
 
-const itemVariants = {
-  hidden: { y: 20, opacity: 0 },
-  visible: { y: 0, opacity: 1 },
+// Quick Stats Data
+const quickStats = [
+  {
+    title: 'Pending Approvals',
+    value: communityOverview.pendingApprovalUsers,
+    icon: ClipboardCheck,
+    bgColor: 'bg-orange-500',
+    trend: '+5 today',
+    trendUp: true,
+  },
+  {
+    title: 'Open Complaints',
+    value: 28,
+    icon: AlertCircle,
+    bgColor: 'bg-red-500',
+    trend: '-3 from yesterday',
+    trendUp: false,
+  },
+  {
+    title: 'Defaulters',
+    value: 8,
+    icon: TrendingDown,
+    bgColor: 'bg-pink-600',
+    trend: '-2 this week',
+    trendUp: false,
+  },
+  {
+    title: "Today's Visitors",
+    value: 42,
+    icon: Shield,
+    bgColor: 'bg-blue-600',
+    trend: '+12 from yesterday',
+    trendUp: true,
+  },
+]
+
+// Financial Overview Data
+const financialOverview = {
+  totalMaintenance: 1245000, // Monthly maintenance
+  maintenanceCollected: 1085000,
+  maintenancePending: 160000,
+  totalOutstanding: 195000,
+  parkingIncome: 120000,
+  amenityIncome: 85000,
+  totalAssetValue: 10600000,
+  monthlyAssetExpense: 280000,
+  pendingVendorPayments: 45000,
+  paidVendorPayments: 320000,
 }
 
 export function AdminDashboard() {
-  const totalUnits = unitStatusData.reduce((sum, item) => sum + item.value, 0)
+  const router = useRouter()
+  const { user } = useAuthStore()
+  const [showSuccess, setShowSuccess] = useState<string | null>(null)
+  const totalIncome = incomeData.reduce((sum, item) => sum + item.value, 0)
+
+  const showNotification = (message: string) => {
+    setShowSuccess(message)
+    setTimeout(() => setShowSuccess(null), 3000)
+  }
+
+  // Stats matching ADDA Community Manager design (page 12, 21, 22)
+  const stats = [
+    {
+      title: 'Total Users',
+      value: '1003',
+      icon: Users,
+      bgColor: 'bg-blue-500',
+      textColor: 'text-white',
+    },
+    {
+      title: 'Awaiting Approvals',
+      value: '32',
+      icon: UserCheck,
+      bgColor: 'bg-orange-400',
+      textColor: 'text-white',
+    },
+    {
+      title: 'Open Meetings',
+      value: '03',
+      icon: Calendar,
+      bgColor: 'bg-emerald-500',
+      textColor: 'text-white',
+    },
+    {
+      title: 'Number of Defaulters',
+      value: '02',
+      icon: TrendingDown,
+      bgColor: 'bg-pink-500',
+      textColor: 'text-white',
+    },
+  ]
 
   return (
     <motion.div
       variants={containerVariants}
       initial="hidden"
       animate="visible"
-      className="space-y-6 p-1"
+      className="space-y-4 sm:space-y-6 w-full max-w-full overflow-x-hidden"
     >
-      {/* Header */}
-      <motion.div variants={itemVariants} className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <div>
-          <div className="flex items-center gap-2 mb-1">
-            <h1 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-gray-900 to-gray-600 bg-clip-text text-transparent">
-              Society Dashboard
-            </h1>
-            <Badge className="bg-green-100 text-green-700 hover:bg-green-100">
-              <span className="w-2 h-2 bg-green-500 rounded-full mr-1.5 animate-pulse" />
-              Live
+      {/* Success Notification */}
+      <AnimatePresence>
+        {showSuccess && (
+          <motion.div
+            initial={{ opacity: 0, y: -50 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -50 }}
+            className="fixed top-4 right-4 z-50 bg-teal-500 text-white px-6 py-3 rounded-lg shadow-lg flex items-center gap-2"
+          >
+            <CheckCircle2 className="h-5 w-5" />
+            {showSuccess}
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Welcome Header - ADDA Style */}
+      <motion.div variants={itemVariants} className="bg-gradient-to-r from-[#1e3a5f] to-[#2d4a6f] rounded-2xl p-6 text-white">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div className="flex items-center gap-4">
+            <Avatar className="h-14 w-14 ring-4 ring-white/20">
+              <AvatarFallback className="bg-gradient-to-br from-teal-400 to-cyan-500 text-white text-xl font-bold">
+                {user?.name?.charAt(0) || 'A'}
+              </AvatarFallback>
+            </Avatar>
+            <div>
+              <p className="text-teal-300 text-sm">Welcome!</p>
+              <h1 className="text-2xl sm:text-3xl font-bold">{user?.name || 'Admin'}</h1>
+              <p className="text-white/70 text-sm">Sharlow Bay Community</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <Badge className="bg-teal-500/20 text-teal-300 hover:bg-teal-500/30 border-0">
+              <span className="w-2 h-2 bg-teal-400 rounded-full mr-1.5 animate-pulse" />
+              Online
             </Badge>
           </div>
-          <p className="text-gray-500">
-            Welcome back! Here's what's happening in your society today.
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" className="hidden sm:flex">
-            <Calendar className="h-4 w-4 mr-2" />
-            Jan 2025
-          </Button>
-          <Button className="bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg shadow-blue-500/25">
-            <Sparkles className="h-4 w-4 mr-2" />
-            Generate Report
-          </Button>
         </div>
       </motion.div>
 
-      {/* Quick Actions */}
-      <motion.div variants={itemVariants} className="flex flex-wrap gap-3">
-        {quickActions.map((action, index) => (
-          <Button
-            key={index}
-            variant="outline"
-            size="sm"
-            className="group hover:border-gray-300"
-            asChild
-          >
-            <a href={action.href}>
-              <div className={`h-6 w-6 rounded-md ${action.color} flex items-center justify-center mr-2 group-hover:scale-110 transition-transform`}>
-                <action.icon className="h-3.5 w-3.5 text-white" />
-              </div>
-              {action.label}
-            </a>
-          </Button>
-        ))}
-      </motion.div>
-
-      {/* Stats Grid */}
-      <motion.div variants={containerVariants} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      {/* Stats Grid - ADDA Style Colored Cards */}
+      <motion.div variants={containerVariants} className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         {stats.map((stat, index) => {
           const Icon = stat.icon
-          const isPositive = stat.trend === 'up'
-
           return (
             <motion.div key={index} variants={itemVariants}>
-              <Card className="relative overflow-hidden border-0 shadow-md hover:shadow-xl transition-all duration-300 group">
-                <div className={`absolute inset-0 bg-gradient-to-br ${stat.bgGradient} opacity-50`} />
-                <CardContent className="p-5 relative">
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <p className="text-sm font-medium text-gray-600 mb-1">{stat.title}</p>
-                      <h3 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-1">{stat.value}</h3>
-                      <p className="text-xs text-gray-500 mb-2">{stat.subtitle}</p>
-                      <div className="flex items-center gap-1.5">
-                        <Badge
-                          variant="secondary"
-                          className={`text-xs px-2 py-0.5 ${
-                            isPositive
-                              ? 'bg-green-100 text-green-700'
-                              : 'bg-blue-100 text-blue-700'
-                          }`}
-                        >
-                          {isPositive ? (
-                            <ArrowUpRight className="h-3 w-3 mr-0.5" />
-                          ) : (
-                            <ArrowDownRight className="h-3 w-3 mr-0.5" />
-                          )}
-                          {stat.change}
-                        </Badge>
-                      </div>
+              <Card className={`${stat.bgColor} border-0 shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden`}>
+                <CardContent className="p-4 sm:p-5">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className={`text-xs sm:text-sm font-medium ${stat.textColor} opacity-90`}>{stat.title}</p>
+                      <h3 className={`text-2xl sm:text-3xl font-bold ${stat.textColor} mt-1`}>{stat.value}</h3>
                     </div>
-                    <div className={`p-3 rounded-xl bg-gradient-to-br ${stat.gradient} shadow-lg group-hover:scale-110 transition-transform`}>
-                      <Icon className="h-5 w-5 text-white" />
+                    <div className="p-2 sm:p-3 bg-white/20 rounded-xl">
+                      <Icon className={`h-5 w-5 sm:h-6 sm:w-6 ${stat.textColor}`} />
                     </div>
                   </div>
                 </CardContent>
@@ -298,121 +336,559 @@ export function AdminDashboard() {
         })}
       </motion.div>
 
-      {/* Charts Row */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Revenue Chart */}
-        <motion.div variants={itemVariants} className="lg:col-span-2">
-          <Card className="border-0 shadow-md">
-            <CardHeader className="pb-2">
-              <div className="flex items-center justify-between">
-                <div>
-                  <CardTitle className="text-lg">Revenue & Collection</CardTitle>
-                  <CardDescription>Monthly billing overview</CardDescription>
+      {/* Community Overview Section */}
+      <motion.div variants={itemVariants}>
+        <Card className="border-0 shadow-md">
+          <CardHeader className="pb-3">
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-lg font-bold text-gray-800">Community Overview</CardTitle>
+              <Badge variant="outline" className="bg-blue-50 text-blue-600 border-blue-200">Live Data</Badge>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              {/* Total Units Card */}
+              <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-4 border border-blue-200">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="p-2 bg-blue-600 rounded-lg">
+                    <Home className="h-5 w-5 text-white" />
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600 font-medium">Total Units</p>
+                    <p className="text-2xl font-bold text-gray-900">{communityOverview.totalUnits}</p>
+                  </div>
                 </div>
-                <Button variant="ghost" size="sm">
-                  View All <ChevronRight className="h-4 w-4 ml-1" />
-                </Button>
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-gray-600 flex items-center gap-1">
+                      <CheckCircle2 className="h-3.5 w-3.5 text-green-600" />
+                      Occupied
+                    </span>
+                    <span className="font-semibold text-green-600">{communityOverview.occupiedUnits}</span>
+                  </div>
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-gray-600 flex items-center gap-1">
+                      <Home className="h-3.5 w-3.5 text-orange-500" />
+                      Vacant
+                    </span>
+                    <span className="font-semibold text-orange-500">{communityOverview.vacantUnits}</span>
+                  </div>
+                  <div className="mt-2 pt-2 border-t border-blue-300">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-gray-600">Occupancy Rate</span>
+                      <span className="font-bold text-blue-700">
+                        {((communityOverview.occupiedUnits / communityOverview.totalUnits) * 100).toFixed(1)}%
+                      </span>
+                    </div>
+                  </div>
+                </div>
               </div>
+
+              {/* Total Users Card */}
+              <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl p-4 border border-purple-200">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="p-2 bg-purple-600 rounded-lg">
+                    <Users className="h-5 w-5 text-white" />
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600 font-medium">Total Users</p>
+                    <p className="text-2xl font-bold text-gray-900">{communityOverview.totalUsers}</p>
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-gray-600 flex items-center gap-1">
+                      <UserCheck className="h-3.5 w-3.5 text-green-600" />
+                      Active
+                    </span>
+                    <span className="font-semibold text-green-600">{communityOverview.activeUsers}</span>
+                  </div>
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-gray-600 flex items-center gap-1">
+                      <UserMinus className="h-3.5 w-3.5 text-gray-500" />
+                      Inactive
+                    </span>
+                    <span className="font-semibold text-gray-500">{communityOverview.inactiveUsers}</span>
+                  </div>
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-gray-600 flex items-center gap-1">
+                      <Clock className="h-3.5 w-3.5 text-orange-500" />
+                      Pending
+                    </span>
+                    <span className="font-semibold text-orange-500">{communityOverview.pendingApprovalUsers}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Owners vs Tenants Card */}
+              <div className="bg-gradient-to-br from-emerald-50 to-emerald-100 rounded-xl p-4 border border-emerald-200">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="p-2 bg-emerald-600 rounded-lg">
+                    <Building2 className="h-5 w-5 text-white" />
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600 font-medium">Residents</p>
+                    <p className="text-2xl font-bold text-gray-900">{communityOverview.owners + communityOverview.tenants}</p>
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-gray-600 flex items-center gap-1">
+                      <UserCheck className="h-3.5 w-3.5 text-emerald-600" />
+                      Owners
+                    </span>
+                    <span className="font-semibold text-emerald-700">{communityOverview.owners}</span>
+                  </div>
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-gray-600 flex items-center gap-1">
+                      <UserPlus className="h-3.5 w-3.5 text-blue-600" />
+                      Tenants
+                    </span>
+                    <span className="font-semibold text-blue-600">{communityOverview.tenants}</span>
+                  </div>
+                  <div className="mt-2 pt-2 border-t border-emerald-300">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-gray-600">Owner Ratio</span>
+                      <span className="font-bold text-emerald-700">
+                        {((communityOverview.owners / (communityOverview.owners + communityOverview.tenants)) * 100).toFixed(1)}%
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Never Logged In Card */}
+              <div className="bg-gradient-to-br from-amber-50 to-amber-100 rounded-xl p-4 border border-amber-200">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="p-2 bg-amber-600 rounded-lg">
+                    <UserX className="h-5 w-5 text-white" />
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600 font-medium">Never Logged In</p>
+                    <p className="text-2xl font-bold text-gray-900">{communityOverview.neverLoggedIn}</p>
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-gray-600">% of Total Users</span>
+                    <span className="font-semibold text-amber-700">
+                      {((communityOverview.neverLoggedIn / communityOverview.totalUsers) * 100).toFixed(1)}%
+                    </span>
+                  </div>
+                  <div className="mt-3">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="w-full border-amber-300 text-amber-700 hover:bg-amber-200"
+                      onClick={() => showNotification('Sending reminder emails...')}
+                    >
+                      <Mail className="h-3.5 w-3.5 mr-1" />
+                      Send Reminders
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </motion.div>
+
+      {/* Financial Overview Section - NEW */}
+      <motion.div variants={itemVariants}>
+        <Card className="border-0 shadow-md">
+          <CardHeader className="pb-3">
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-lg font-bold text-gray-800">Financial Overview</CardTitle>
+              <Badge variant="outline" className="bg-green-50 text-green-600 border-green-200">This Month</Badge>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              {/* Maintenance Collection */}
+              <div className="bg-gradient-to-br from-green-50 to-emerald-100 rounded-xl p-4 border border-green-200">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="p-2 bg-green-600 rounded-lg">
+                    <DollarSign className="h-5 w-5 text-white" />
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600 font-medium">Maintenance</p>
+                    <p className="text-xl font-bold text-gray-900">Rs. {(financialOverview.totalMaintenance / 100000).toFixed(2)}L</p>
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-gray-600 flex items-center gap-1">
+                      <CheckCircle2 className="h-3.5 w-3.5 text-green-600" />
+                      Collected
+                    </span>
+                    <span className="font-semibold text-green-600">Rs. {(financialOverview.maintenanceCollected / 100000).toFixed(2)}L</span>
+                  </div>
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-gray-600 flex items-center gap-1">
+                      <Clock className="h-3.5 w-3.5 text-orange-500" />
+                      Pending
+                    </span>
+                    <span className="font-semibold text-orange-500">Rs. {(financialOverview.maintenancePending / 100000).toFixed(2)}L</span>
+                  </div>
+                  <div className="mt-2 pt-2 border-t border-green-300">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-gray-600">Collection Rate</span>
+                      <span className="font-bold text-green-700">
+                        {((financialOverview.maintenanceCollected / financialOverview.totalMaintenance) * 100).toFixed(1)}%
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Outstanding Amount */}
+              <div className="bg-gradient-to-br from-red-50 to-rose-100 rounded-xl p-4 border border-red-200">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="p-2 bg-red-600 rounded-lg">
+                    <AlertCircle className="h-5 w-5 text-white" />
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600 font-medium">Outstanding</p>
+                    <p className="text-xl font-bold text-red-700">Rs. {(financialOverview.totalOutstanding / 100000).toFixed(2)}L</p>
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-gray-600">Defaulters</span>
+                    <span className="font-semibold text-red-600">5 units</span>
+                  </div>
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-gray-600">Late Fees</span>
+                    <span className="font-semibold text-orange-600">Rs. 15.75K</span>
+                  </div>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="w-full mt-2 border-red-300 text-red-700 hover:bg-red-100"
+                    onClick={() => router.push('/dashboard/admin/defaulters')}
+                  >
+                    View Defaulters
+                  </Button>
+                </div>
+              </div>
+
+              {/* Parking & Amenity Income */}
+              <div className="bg-gradient-to-br from-blue-50 to-cyan-100 rounded-xl p-4 border border-blue-200">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="p-2 bg-blue-600 rounded-lg">
+                    <Car className="h-5 w-5 text-white" />
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600 font-medium">Other Income</p>
+                    <p className="text-xl font-bold text-gray-900">Rs. {((financialOverview.parkingIncome + financialOverview.amenityIncome) / 100000).toFixed(2)}L</p>
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-gray-600 flex items-center gap-1">
+                      <Car className="h-3.5 w-3.5 text-blue-600" />
+                      Parking
+                    </span>
+                    <span className="font-semibold text-blue-600">Rs. {(financialOverview.parkingIncome / 1000).toFixed(0)}K</span>
+                  </div>
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-gray-600 flex items-center gap-1">
+                      <Building2 className="h-3.5 w-3.5 text-purple-600" />
+                      Amenity
+                    </span>
+                    <span className="font-semibold text-purple-600">Rs. {(financialOverview.amenityIncome / 1000).toFixed(0)}K</span>
+                  </div>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="w-full mt-2 border-blue-300 text-blue-700 hover:bg-blue-100"
+                    onClick={() => router.push('/dashboard/parking/payments')}
+                  >
+                    View Parking
+                  </Button>
+                </div>
+              </div>
+
+              {/* Assets & Vendor Payments */}
+              <div className="bg-gradient-to-br from-purple-50 to-violet-100 rounded-xl p-4 border border-purple-200">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="p-2 bg-purple-600 rounded-lg">
+                    <Package className="h-5 w-5 text-white" />
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600 font-medium">Assets & Expenses</p>
+                    <p className="text-xl font-bold text-gray-900">Rs. {(financialOverview.totalAssetValue / 10000000).toFixed(2)}Cr</p>
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-gray-600 flex items-center gap-1">
+                      <Wrench className="h-3.5 w-3.5 text-orange-500" />
+                      Monthly Exp
+                    </span>
+                    <span className="font-semibold text-orange-600">Rs. {(financialOverview.monthlyAssetExpense / 100000).toFixed(2)}L</span>
+                  </div>
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-gray-600 flex items-center gap-1">
+                      <CreditCard className="h-3.5 w-3.5 text-red-500" />
+                      Vendor Due
+                    </span>
+                    <span className="font-semibold text-red-600">Rs. {(financialOverview.pendingVendorPayments / 1000).toFixed(0)}K</span>
+                  </div>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="w-full mt-2 border-purple-300 text-purple-700 hover:bg-purple-100"
+                    onClick={() => router.push('/dashboard/accounting/vendor-payments')}
+                  >
+                    Pay Vendors
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </motion.div>
+
+      {/* Quick Stats Widgets */}
+      <motion.div variants={containerVariants} className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+        {quickStats.map((stat, index) => {
+          const Icon = stat.icon
+          return (
+            <motion.div key={index} variants={itemVariants}>
+              <Card className="border-0 shadow-md hover:shadow-lg transition-all duration-300">
+                <CardContent className="p-4">
+                  <div className="flex items-start justify-between mb-3">
+                    <div className={`p-3 ${stat.bgColor} rounded-xl`}>
+                      <Icon className="h-5 w-5 text-white" />
+                    </div>
+                    <Badge variant="outline" className={`text-xs ${stat.trendUp ? 'text-green-600 border-green-200 bg-green-50' : 'text-blue-600 border-blue-200 bg-blue-50'}`}>
+                      {stat.trendUp ? (
+                        <ArrowUpRight className="h-3 w-3 mr-0.5" />
+                      ) : (
+                        <ArrowDownRight className="h-3 w-3 mr-0.5" />
+                      )}
+                      {stat.trend}
+                    </Badge>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600 font-medium mb-1">{stat.title}</p>
+                    <p className="text-3xl font-bold text-gray-900">{stat.value}</p>
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
+          )
+        })}
+      </motion.div>
+
+      {/* Purchase Requests & Helpdesk Row */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+        {/* Purchase Requests Card - ADDA Style */}
+        <motion.div variants={itemVariants}>
+          <Card className="border-0 shadow-md h-full">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-lg font-bold text-gray-800">Purchase Requests</CardTitle>
             </CardHeader>
             <CardContent>
-              <ResponsiveContainer width="100%" height={280}>
-                <AreaChart data={revenueData}>
-                  <defs>
-                    <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.2} />
-                      <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
-                    </linearGradient>
-                    <linearGradient id="colorCollected" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#22c55e" stopOpacity={0.2} />
-                      <stop offset="95%" stopColor="#22c55e" stopOpacity={0} />
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                  <XAxis dataKey="month" stroke="#6b7280" fontSize={12} />
-                  <YAxis stroke="#6b7280" fontSize={12} tickFormatter={(v) => `₹${v/1000}K`} />
-                  <Tooltip formatter={(value: number) => `₹${value.toLocaleString()}`} />
-                  <Legend />
-                  <Area type="monotone" dataKey="revenue" name="Billed" stroke="#3b82f6" strokeWidth={2} fillOpacity={1} fill="url(#colorRevenue)" />
-                  <Area type="monotone" dataKey="collected" name="Collected" stroke="#22c55e" strokeWidth={2} fillOpacity={1} fill="url(#colorCollected)" />
-                </AreaChart>
-              </ResponsiveContainer>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="bg-emerald-50 rounded-xl p-4 text-center">
+                  <p className="text-sm text-gray-600 mb-1">Open</p>
+                  <p className="text-3xl font-bold text-emerald-600">03</p>
+                </div>
+                <div className="bg-orange-50 rounded-xl p-4 text-center">
+                  <p className="text-sm text-gray-600 mb-1">Un-Finalized</p>
+                  <p className="text-3xl font-bold text-orange-500">00</p>
+                </div>
+              </div>
+              <Button
+                className="w-full mt-4 bg-emerald-600 hover:bg-emerald-700 text-white"
+                onClick={() => router.push('/dashboard/financial/invoices')}
+              >
+                View All Requests
+              </Button>
             </CardContent>
           </Card>
         </motion.div>
 
-        {/* Unit Status */}
+        {/* Helpdesk Tickets Card - ADDA Style with Bar Chart */}
         <motion.div variants={itemVariants}>
           <Card className="border-0 shadow-md h-full">
             <CardHeader className="pb-2">
               <div className="flex items-center justify-between">
-                <div>
-                  <CardTitle className="text-lg">Unit Status</CardTitle>
-                  <CardDescription>Total: {totalUnits} units</CardDescription>
+                <CardTitle className="text-lg font-bold text-gray-800">Helpdesk Tickets</CardTitle>
+                <div className="flex items-center gap-4 text-sm">
+                  <div className="flex items-center gap-1">
+                    <span className="text-blue-600 font-semibold">Open Tickets</span>
+                    <span className="text-blue-600 font-bold">109</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <span className="text-red-500 font-semibold">Escalated Tickets</span>
+                    <span className="text-red-500 font-bold">12</span>
+                  </div>
                 </div>
-                <Home className="h-5 w-5 text-blue-500" />
               </div>
             </CardHeader>
             <CardContent>
               <ResponsiveContainer width="100%" height={180}>
-                <PieChart>
-                  <Pie
-                    data={unitStatusData}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={50}
-                    outerRadius={75}
-                    paddingAngle={3}
-                    dataKey="value"
-                  >
-                    {unitStatusData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
-                    ))}
-                  </Pie>
-                  <Tooltip formatter={(value: number) => `${value} units`} />
-                </PieChart>
+                <BarChart data={helpdeskData}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" vertical={false} />
+                  <XAxis dataKey="month" stroke="#6b7280" fontSize={12} />
+                  <YAxis stroke="#6b7280" fontSize={12} />
+                  <Tooltip />
+                  <Bar dataKey="open" fill="#3b82f6" radius={[4, 4, 0, 0]} name="Open" />
+                  <Bar dataKey="resolved" fill="#ef4444" radius={[4, 4, 0, 0]} name="Escalated" />
+                </BarChart>
               </ResponsiveContainer>
-              <div className="grid grid-cols-2 gap-2 mt-2">
-                {unitStatusData.map((item, index) => (
-                  <div key={index} className="flex items-center gap-2 text-sm">
-                    <div className="w-3 h-3 rounded-full" style={{ backgroundColor: item.color }} />
-                    <span className="text-gray-600">{item.name}</span>
-                    <span className="font-semibold ml-auto">{item.value}</span>
-                  </div>
-                ))}
-              </div>
             </CardContent>
           </Card>
         </motion.div>
       </div>
 
-      {/* Second Row */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Complaints Chart */}
+      {/* Income & Expense Trackers Row - ADDA Style */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+        {/* Income Tracker with Donut Chart - ADDA Style */}
         <motion.div variants={itemVariants}>
           <Card className="border-0 shadow-md">
             <CardHeader className="pb-2">
               <div className="flex items-center justify-between">
-                <div>
-                  <CardTitle className="text-lg">Complaints</CardTitle>
-                  <CardDescription>By category this month</CardDescription>
+                <CardTitle className="text-lg font-bold text-gray-800">Income Tracker</CardTitle>
+                <div className="flex items-center gap-4 text-sm">
+                  <div className="flex items-center gap-1">
+                    <span className="w-3 h-3 rounded-full bg-blue-500"></span>
+                    <span className="text-gray-600">Balance</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <span className="w-3 h-3 rounded-full bg-red-500"></span>
+                    <span className="text-gray-600">Collected</span>
+                  </div>
                 </div>
-                <AlertCircle className="h-5 w-5 text-orange-500" />
               </div>
             </CardHeader>
             <CardContent>
-              <ResponsiveContainer width="100%" height={200}>
-                <BarChart data={complaintData} layout="vertical">
-                  <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" horizontal={false} />
-                  <XAxis type="number" stroke="#6b7280" fontSize={12} />
-                  <YAxis type="category" dataKey="category" stroke="#6b7280" fontSize={12} width={70} />
-                  <Tooltip />
-                  <Bar dataKey="count" radius={[0, 4, 4, 0]}>
-                    {complaintData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
+              <div className="flex flex-col sm:flex-row items-center gap-6">
+                <div className="relative">
+                  <ResponsiveContainer width={180} height={180}>
+                    <PieChart>
+                      <Pie
+                        data={incomeData}
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={55}
+                        outerRadius={80}
+                        paddingAngle={2}
+                        dataKey="value"
+                      >
+                        {incomeData.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={entry.color} />
+                        ))}
+                      </Pie>
+                      <Tooltip formatter={(value: number) => `Rs. ${value.toLocaleString()}`} />
+                    </PieChart>
+                  </ResponsiveContainer>
+                  <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
+                    <p className="text-xs text-gray-500">1 Nov 2022</p>
+                    <p className="text-[10px] text-gray-400">to</p>
+                    <p className="text-xs text-gray-500">1 Dec 2022</p>
+                  </div>
+                </div>
+                <div className="flex-1 space-y-3">
+                  <div className="text-center sm:text-left">
+                    <p className="text-sm text-gray-500">Balance Amount</p>
+                    <p className="text-3xl font-bold text-emerald-600">Rs. 1,45,867</p>
+                  </div>
+                  <div className="grid grid-cols-3 gap-2 text-center">
+                    {monthlyData.map((item, idx) => (
+                      <div key={idx}>
+                        <p className="text-xs text-gray-500">{item.month}</p>
+                        <p className="text-sm font-semibold">Rs. {(item.amount / 1000).toFixed(0)}K</p>
+                      </div>
                     ))}
+                  </div>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="flex-1 border-blue-200 text-blue-600 hover:bg-blue-50"
+                      onClick={() => router.push('/dashboard/financial/billing')}
+                    >
+                      7 Paid Intimations
+                    </Button>
+                    <Button
+                      size="sm"
+                      className="flex-1 bg-red-500 hover:bg-red-600 text-white"
+                      onClick={() => router.push('/dashboard/financial/billing')}
+                    >
+                      8 Defaulters
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
+
+        {/* Expense Tracker - ADDA Style */}
+        <motion.div variants={itemVariants}>
+          <Card className="border-0 shadow-md">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-lg font-bold text-gray-800">Expense Tracker</CardTitle>
+              <CardDescription>Variance Amount</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <p className="text-3xl font-bold text-gray-800 mb-4">Rs. 2,321,213</p>
+              <ResponsiveContainer width="100%" height={150}>
+                <BarChart data={expenseData} layout="vertical">
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" horizontal={false} />
+                  <XAxis type="number" stroke="#6b7280" fontSize={12} tickFormatter={(v) => `${v/1000}K`} />
+                  <YAxis type="category" dataKey="month" stroke="#6b7280" fontSize={12} width={60} />
+                  <Tooltip formatter={(value: number) => `Rs. ${value.toLocaleString()}`} />
+                  <Bar dataKey="amount" radius={[0, 4, 4, 0]}>
+                    <Cell fill="#3b82f6" />
+                    <Cell fill="#ef4444" />
                   </Bar>
                 </BarChart>
               </ResponsiveContainer>
+              <Button
+                className="w-full mt-4 bg-emerald-600 hover:bg-emerald-700 text-white"
+                onClick={() => router.push('/dashboard/financial/invoices')}
+              >
+                24 Open Purchase Request
+              </Button>
+            </CardContent>
+          </Card>
+        </motion.div>
+      </div>
+
+      {/* Quick Actions & Recent Activities Row */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
+        {/* Quick Actions - ADDA Style */}
+        <motion.div variants={itemVariants}>
+          <Card className="border-0 shadow-md">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-lg font-bold text-gray-800">Quick Actions</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {quickActions.map((action, index) => {
+                const Icon = action.icon
+                return (
+                  <Button
+                    key={index}
+                    variant="outline"
+                    className="w-full justify-start h-auto py-3 hover:bg-gray-50"
+                    onClick={() => router.push(action.href)}
+                  >
+                    <div className={`p-2 rounded-xl ${action.color} mr-3`}>
+                      <Icon className="h-4 w-4 text-white" />
+                    </div>
+                    <div className="text-left">
+                      <p className="font-medium text-gray-900">{action.label}</p>
+                      <p className="text-xs text-gray-500">{action.description}</p>
+                    </div>
+                    <ChevronRight className="h-4 w-4 ml-auto text-gray-400" />
+                  </Button>
+                )
+              })}
             </CardContent>
           </Card>
         </motion.div>
@@ -422,11 +898,8 @@ export function AdminDashboard() {
           <Card className="border-0 shadow-md h-full">
             <CardHeader className="pb-2">
               <div className="flex items-center justify-between">
-                <div>
-                  <CardTitle className="text-lg">Recent Activities</CardTitle>
-                  <CardDescription>Latest updates from your society</CardDescription>
-                </div>
-                <Button variant="ghost" size="sm">
+                <CardTitle className="text-lg font-bold text-gray-800">Recent Activities</CardTitle>
+                <Button variant="ghost" size="sm" className="text-teal-600 hover:text-teal-700">
                   View All <ChevronRight className="h-4 w-4 ml-1" />
                 </Button>
               </div>
@@ -436,7 +909,7 @@ export function AdminDashboard() {
                 {recentActivities.map((activity) => (
                   <div
                     key={activity.id}
-                    className="flex items-start gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors"
+                    className="flex items-start gap-3 p-3 rounded-xl hover:bg-gray-50 transition-colors"
                   >
                     <Avatar className="h-10 w-10">
                       <AvatarFallback className={`text-xs font-semibold ${
@@ -451,14 +924,11 @@ export function AdminDashboard() {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
                         <p className="text-sm font-medium text-gray-900">{activity.user}</p>
-                        <Badge variant="outline" className="text-[10px] px-1.5 py-0">{activity.unit}</Badge>
+                        <Badge variant="outline" className="text-[10px] px-1.5 py-0 bg-gray-100">{activity.unit}</Badge>
                       </div>
                       <p className="text-sm text-gray-600 truncate">{activity.action}</p>
                       <p className="text-xs text-gray-400 mt-0.5">{activity.time}</p>
                     </div>
-                    <Button variant="ghost" size="icon" className="h-8 w-8">
-                      <MoreHorizontal className="h-4 w-4" />
-                    </Button>
                   </div>
                 ))}
               </div>
@@ -467,36 +937,30 @@ export function AdminDashboard() {
         </motion.div>
       </div>
 
-      {/* Upcoming Events */}
+      {/* Set Up Amenities - ADDA Style */}
       <motion.div variants={itemVariants}>
         <Card className="border-0 shadow-md">
           <CardHeader className="pb-2">
             <div className="flex items-center justify-between">
-              <div>
-                <CardTitle className="text-lg">Upcoming Events</CardTitle>
-                <CardDescription>Society events and activities</CardDescription>
-              </div>
-              <Button variant="outline" size="sm">
-                <Calendar className="h-4 w-4 mr-2" />
-                Add Event
-              </Button>
+              <CardTitle className="text-lg font-bold text-gray-800">Set Up Amenities</CardTitle>
+              <Badge variant="outline" className="bg-green-50 text-green-600 border-green-200">Active</Badge>
             </div>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              {upcomingEvents.map((event, index) => (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              {amenities.map((amenity, index) => (
                 <div
                   key={index}
-                  className="p-4 rounded-xl bg-gradient-to-br from-gray-50 to-gray-100 hover:from-blue-50 hover:to-purple-50 transition-colors cursor-pointer group"
+                  className="flex items-center justify-between p-4 rounded-xl bg-gray-50 hover:bg-gray-100 transition-colors"
                 >
-                  <div className="flex items-center justify-between mb-2">
-                    <Badge variant="outline" className="bg-white">{event.date}</Badge>
-                    <span className="text-xs text-gray-500">{event.time}</span>
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-white rounded-lg shadow-sm">
+                      <Building2 className="h-5 w-5 text-gray-600" />
+                    </div>
+                    <span className="font-medium text-gray-700">{amenity.name}</span>
                   </div>
-                  <h4 className="font-semibold text-gray-900 group-hover:text-blue-600 transition-colors">{event.name}</h4>
-                  <div className="flex items-center gap-1 mt-2 text-xs text-gray-500">
-                    <Users className="h-3 w-3" />
-                    <span>{event.attendees} attending</span>
+                  <div className={`w-12 h-6 rounded-full p-1 transition-colors ${amenity.status ? 'bg-teal-500' : 'bg-gray-300'}`}>
+                    <div className={`w-4 h-4 rounded-full bg-white shadow transition-transform ${amenity.status ? 'translate-x-6' : 'translate-x-0'}`} />
                   </div>
                 </div>
               ))}

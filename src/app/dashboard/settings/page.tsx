@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 import { useAuthStore } from '@/lib/stores/auth-store'
 import {
   Settings,
@@ -17,6 +17,7 @@ import {
   Moon,
   Sun,
   Check,
+  CheckCircle2,
   ChevronRight,
   Camera,
   LogOut,
@@ -71,11 +72,26 @@ export default function SettingsPage() {
     sms: false,
     whatsapp: true,
   })
-  const [showSuccess, setShowSuccess] = useState(false)
+  const [showSuccess, setShowSuccess] = useState<string | null>(null)
+  const [isPasswordDialogOpen, setIsPasswordDialogOpen] = useState(false)
+  const [twoFactorEnabled, setTwoFactorEnabled] = useState(false)
+
+  const showNotification = (message: string) => {
+    setShowSuccess(message)
+    setTimeout(() => setShowSuccess(null), 3000)
+  }
 
   const handleSave = () => {
-    setShowSuccess(true)
-    setTimeout(() => setShowSuccess(false), 3000)
+    showNotification('Settings saved successfully!')
+  }
+
+  const handlePasswordChange = () => {
+    setIsPasswordDialogOpen(false)
+    showNotification('Password updated successfully!')
+  }
+
+  const handlePhotoUpload = () => {
+    showNotification('Photo upload feature coming soon!')
   }
 
   const handleLogout = () => {
@@ -93,15 +109,30 @@ export default function SettingsPage() {
       animate="visible"
       className="space-y-6 pb-10"
     >
+      {/* Success Notification */}
+      <AnimatePresence>
+        {showSuccess && (
+          <motion.div
+            initial={{ opacity: 0, y: -50 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -50 }}
+            className="fixed top-4 right-4 z-50 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg flex items-center gap-2"
+          >
+            <CheckCircle2 className="h-5 w-5" />
+            {showSuccess}
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Header */}
       <motion.div variants={itemVariants} className="flex items-center justify-between">
         <div>
           <div className="flex items-center gap-3">
-            <div className="p-2 rounded-xl bg-gradient-to-br from-blue-500 to-purple-600">
+            <div className="p-2 rounded-xl bg-gradient-to-br from-teal-500 to-cyan-500">
               <Settings className="h-6 w-6 text-white" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold bg-gradient-to-r from-gray-900 to-gray-600 bg-clip-text text-transparent">
+              <h1 className="text-2xl font-bold text-[#1e3a5f]">
                 Settings
               </h1>
               <p className="text-muted-foreground text-sm">
@@ -110,40 +141,38 @@ export default function SettingsPage() {
             </div>
           </div>
         </div>
-        {showSuccess && (
-          <Badge className="bg-green-100 text-green-700 gap-1">
-            <Check className="h-3 w-3" />
-            Settings saved
-          </Badge>
-        )}
       </motion.div>
 
       <Tabs defaultValue="profile" className="space-y-6">
         <motion.div variants={itemVariants}>
-          <TabsList className="bg-gray-100 p-1 h-auto flex-wrap">
-            <TabsTrigger value="profile" className="gap-2">
-              <User className="h-4 w-4" />
-              Profile
-            </TabsTrigger>
-            <TabsTrigger value="notifications" className="gap-2">
-              <Bell className="h-4 w-4" />
-              Notifications
-            </TabsTrigger>
-            <TabsTrigger value="appearance" className="gap-2">
-              <Palette className="h-4 w-4" />
-              Appearance
-            </TabsTrigger>
-            <TabsTrigger value="security" className="gap-2">
-              <Shield className="h-4 w-4" />
-              Security
-            </TabsTrigger>
-            {isAdmin && (
-              <TabsTrigger value="society" className="gap-2">
-                <Building2 className="h-4 w-4" />
-                Society
+          <div className="overflow-x-auto -mx-3 sm:mx-0 px-3 sm:px-0">
+            <TabsList className="bg-gray-100 p-1 h-auto flex-nowrap sm:flex-wrap w-max sm:w-auto">
+              <TabsTrigger value="profile" className="gap-1 sm:gap-2 text-xs sm:text-sm whitespace-nowrap">
+                <User className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                Profile
               </TabsTrigger>
-            )}
-          </TabsList>
+              <TabsTrigger value="notifications" className="gap-1 sm:gap-2 text-xs sm:text-sm whitespace-nowrap">
+                <Bell className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                <span className="hidden sm:inline">Notifications</span>
+                <span className="sm:hidden">Alerts</span>
+              </TabsTrigger>
+              <TabsTrigger value="appearance" className="gap-1 sm:gap-2 text-xs sm:text-sm whitespace-nowrap">
+                <Palette className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                <span className="hidden sm:inline">Appearance</span>
+                <span className="sm:hidden">Theme</span>
+              </TabsTrigger>
+              <TabsTrigger value="security" className="gap-1 sm:gap-2 text-xs sm:text-sm whitespace-nowrap">
+                <Shield className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                Security
+              </TabsTrigger>
+              {isAdmin && (
+                <TabsTrigger value="society" className="gap-1 sm:gap-2 text-xs sm:text-sm whitespace-nowrap">
+                  <Building2 className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                  Society
+                </TabsTrigger>
+              )}
+            </TabsList>
+          </div>
         </motion.div>
 
         {/* Profile Tab */}
@@ -163,16 +192,16 @@ export default function SettingsPage() {
                 {/* Avatar Section */}
                 <div className="flex items-center gap-6">
                   <div className="relative">
-                    <Avatar className="h-24 w-24 ring-4 ring-blue-100">
+                    <Avatar className="h-24 w-24 ring-4 ring-teal-100">
                       <AvatarImage src={user?.avatar} />
-                      <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-600 text-white text-2xl">
+                      <AvatarFallback className="bg-gradient-to-br from-teal-500 to-cyan-500 text-white text-2xl">
                         {user?.name?.charAt(0)}
                       </AvatarFallback>
                     </Avatar>
                     <Button
                       size="icon"
-                      className="absolute bottom-0 right-0 h-8 w-8 rounded-full bg-blue-600 hover:bg-blue-700 shadow-lg"
-                      onClick={() => alert('Photo upload feature coming soon!')}
+                      className="absolute bottom-0 right-0 h-8 w-8 rounded-full bg-teal-600 hover:bg-teal-700 shadow-lg"
+                      onClick={handlePhotoUpload}
                     >
                       <Camera className="h-4 w-4" />
                     </Button>
@@ -180,7 +209,7 @@ export default function SettingsPage() {
                   <div>
                     <h3 className="text-lg font-semibold">{user?.name}</h3>
                     <p className="text-sm text-muted-foreground">{user?.email}</p>
-                    <Badge className="mt-2 bg-blue-100 text-blue-700">
+                    <Badge className="mt-2 bg-teal-100 text-teal-700">
                       {user?.role === 'admin' ? 'Administrator' : user?.role === 'guard' ? 'Security Guard' : 'Resident'}
                     </Badge>
                   </div>
@@ -211,7 +240,7 @@ export default function SettingsPage() {
                 <div className="flex justify-end gap-3">
                   <Button variant="outline">Cancel</Button>
                   <Button
-                    className="bg-gradient-to-r from-blue-600 to-purple-600"
+                    className="bg-gradient-to-r from-teal-500 to-cyan-500"
                     onClick={handleSave}
                   >
                     Save Changes
@@ -304,7 +333,7 @@ export default function SettingsPage() {
 
                 <div className="flex justify-end">
                   <Button
-                    className="bg-gradient-to-r from-blue-600 to-purple-600"
+                    className="bg-gradient-to-r from-teal-500 to-cyan-500"
                     onClick={handleSave}
                   >
                     Save Preferences
@@ -334,7 +363,7 @@ export default function SettingsPage() {
                   <div className="grid grid-cols-3 gap-4">
                     <div
                       className={`p-4 rounded-lg border-2 cursor-pointer transition-all ${
-                        theme === 'light' ? 'border-blue-500 bg-blue-50' : 'border-gray-200 hover:border-gray-300'
+                        theme === 'light' ? 'border-teal-500 bg-teal-50' : 'border-gray-200 hover:border-gray-300'
                       }`}
                       onClick={() => setTheme('light')}
                     >
@@ -345,7 +374,7 @@ export default function SettingsPage() {
                     </div>
                     <div
                       className={`p-4 rounded-lg border-2 cursor-pointer transition-all ${
-                        theme === 'dark' ? 'border-blue-500 bg-blue-50' : 'border-gray-200 hover:border-gray-300'
+                        theme === 'dark' ? 'border-teal-500 bg-teal-50' : 'border-gray-200 hover:border-gray-300'
                       }`}
                       onClick={() => setTheme('dark')}
                     >
@@ -356,7 +385,7 @@ export default function SettingsPage() {
                     </div>
                     <div
                       className={`p-4 rounded-lg border-2 cursor-pointer transition-all ${
-                        theme === 'system' ? 'border-blue-500 bg-blue-50' : 'border-gray-200 hover:border-gray-300'
+                        theme === 'system' ? 'border-teal-500 bg-teal-50' : 'border-gray-200 hover:border-gray-300'
                       }`}
                       onClick={() => setTheme('system')}
                     >
@@ -404,7 +433,7 @@ export default function SettingsPage() {
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
-                <Dialog>
+                <Dialog open={isPasswordDialogOpen} onOpenChange={setIsPasswordDialogOpen}>
                   <DialogTrigger asChild>
                     <div className="flex items-center justify-between p-4 rounded-lg bg-muted/50 cursor-pointer hover:bg-muted transition-colors">
                       <div className="flex items-center gap-3">
@@ -441,8 +470,8 @@ export default function SettingsPage() {
                       </div>
                     </div>
                     <DialogFooter>
-                      <Button variant="outline">Cancel</Button>
-                      <Button className="bg-gradient-to-r from-blue-600 to-purple-600" onClick={handleSave}>
+                      <Button variant="outline" onClick={() => setIsPasswordDialogOpen(false)}>Cancel</Button>
+                      <Button className="bg-gradient-to-r from-teal-500 to-cyan-500" onClick={handlePasswordChange}>
                         Update Password
                       </Button>
                     </DialogFooter>
@@ -459,7 +488,13 @@ export default function SettingsPage() {
                       <p className="text-sm text-muted-foreground">Add an extra layer of security</p>
                     </div>
                   </div>
-                  <Switch />
+                  <Switch
+                    checked={twoFactorEnabled}
+                    onCheckedChange={(checked) => {
+                      setTwoFactorEnabled(checked)
+                      showNotification(checked ? '2FA enabled!' : '2FA disabled!')
+                    }}
+                  />
                 </div>
 
                 <Separator />
@@ -548,7 +583,7 @@ export default function SettingsPage() {
                   <div className="flex justify-end gap-3">
                     <Button variant="outline">Cancel</Button>
                     <Button
-                      className="bg-gradient-to-r from-blue-600 to-purple-600"
+                      className="bg-gradient-to-r from-teal-500 to-cyan-500"
                       onClick={handleSave}
                     >
                       Save Settings

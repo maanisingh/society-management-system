@@ -9,6 +9,7 @@ import {
   Search,
   QrCode,
   CheckCircle,
+  CheckCircle2,
   Clock,
   XCircle,
   Camera,
@@ -244,9 +245,11 @@ function NotifyResidentButton({ visitor }: { visitor: typeof visitors[0] }) {
   )
 }
 
-function VisitorDetailDialog({ visitor }: { visitor: typeof visitors[0] }) {
+function VisitorDetailDialog({ visitor, onCheckIn, onCheckOut }: { visitor: typeof visitors[0], onCheckIn?: (name: string) => void, onCheckOut?: (name: string) => void }) {
+  const [isOpen, setIsOpen] = useState(false)
+
   return (
-    <Dialog>
+    <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
         <Button variant="ghost" size="icon" className="h-8 w-8">
           <Eye className="h-4 w-4" />
@@ -261,7 +264,7 @@ function VisitorDetailDialog({ visitor }: { visitor: typeof visitors[0] }) {
           <div className="flex items-start gap-4">
             <Avatar className="h-16 w-16">
               <AvatarImage src={visitor.photo || undefined} />
-              <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-600 text-white text-xl">
+              <AvatarFallback className="bg-gradient-to-br from-teal-500 to-cyan-500 text-white text-xl">
                 {visitor.name.charAt(0)}
               </AvatarFallback>
             </Avatar>
@@ -350,18 +353,18 @@ function VisitorDetailDialog({ visitor }: { visitor: typeof visitors[0] }) {
           {/* Actions */}
           <div className="flex gap-2 pt-4 border-t">
             {visitor.status === 'checked-in' && (
-              <Button className="flex-1 bg-red-600 hover:bg-red-700">
+              <Button className="flex-1 bg-red-600 hover:bg-red-700" onClick={() => { onCheckOut?.(visitor.name); setIsOpen(false); }}>
                 <ArrowUpRight className="h-4 w-4 mr-2" />
                 Check Out
               </Button>
             )}
             {visitor.status === 'approved' && (
-              <Button className="flex-1 bg-green-600 hover:bg-green-700">
+              <Button className="flex-1 bg-green-600 hover:bg-green-700" onClick={() => { onCheckIn?.(visitor.name); setIsOpen(false); }}>
                 <ArrowDownLeft className="h-4 w-4 mr-2" />
                 Check In
               </Button>
             )}
-            <Button variant="outline" className="flex-1">
+            <Button variant="outline" className="flex-1" onClick={() => setIsOpen(false)}>
               <Printer className="h-4 w-4 mr-2" />
               Print Pass
             </Button>
@@ -376,9 +379,50 @@ export default function VisitorsPage() {
   const [searchQuery, setSearchQuery] = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
   const [activeTab, setActiveTab] = useState('all')
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
+  const [showSuccess, setShowSuccess] = useState<string | null>(null)
   const { user } = useAuthStore()
   const isAdmin = user?.role === 'admin'
   const isGuard = user?.role === 'guard'
+
+  const showNotification = (message: string) => {
+    setShowSuccess(message)
+    setTimeout(() => setShowSuccess(null), 3000)
+  }
+
+  const handleCheckIn = (visitorName: string) => {
+    showNotification(`${visitorName} checked in successfully!`)
+  }
+
+  const handleCheckOut = (visitorName: string) => {
+    showNotification(`${visitorName} checked out successfully!`)
+  }
+
+  const handleApprove = (visitorName: string) => {
+    showNotification(`${visitorName} approved successfully!`)
+  }
+
+  const handleReject = (visitorName: string) => {
+    showNotification(`${visitorName} rejected!`)
+  }
+
+  const handleAddVisitor = () => {
+    setIsAddDialogOpen(false)
+    showNotification('Visitor registered successfully!')
+  }
+
+  const handlePreApprove = () => {
+    setIsAddDialogOpen(false)
+    showNotification('Visitor pre-approved! QR pass generated.')
+  }
+
+  const handleExport = () => {
+    showNotification('Visitor data exported successfully!')
+  }
+
+  const handleScanQR = () => {
+    showNotification('QR scanner opened!')
+  }
 
   const filteredVisitors = visitors.filter((visitor) => {
     const matchesSearch =
@@ -406,16 +450,31 @@ export default function VisitorsPage() {
 
   return (
     <RoleGuard allowedRoles={['admin', 'guard']}>
+      {/* Success Notification */}
+      <AnimatePresence>
+        {showSuccess && (
+          <motion.div
+            initial={{ opacity: 0, y: -50 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -50 }}
+            className="fixed top-4 right-4 z-50 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg flex items-center gap-2"
+          >
+            <CheckCircle2 className="h-5 w-5" />
+            {showSuccess}
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       <div className="space-y-6">
         {/* Header */}
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
           <div>
             <div className="flex items-center gap-3">
-              <div className="p-2 rounded-xl bg-gradient-to-br from-blue-500 to-purple-600">
+              <div className="p-2 rounded-xl bg-gradient-to-br from-teal-500 to-cyan-500">
                 <Users className="h-6 w-6 text-white" />
               </div>
               <div>
-                <h1 className="text-2xl font-bold bg-gradient-to-r from-gray-900 to-gray-600 bg-clip-text text-transparent">
+                <h1 className="text-2xl font-bold text-[#1e3a5f]">
                   {isAdmin ? 'Visitor Management' : 'Visitor Check-In/Out'}
                 </h1>
                 <p className="text-muted-foreground text-sm">
@@ -427,20 +486,21 @@ export default function VisitorsPage() {
             </div>
           </div>
 
-          <div className="flex items-center gap-3">
-            <Button variant="outline" className="gap-2">
+          <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+            <Button variant="outline" className="gap-2 text-sm" onClick={handleScanQR}>
               <Scan className="h-4 w-4" />
-              <span>Scan QR</span>
+              <span className="hidden sm:inline">Scan QR</span>
             </Button>
-            <Button variant="outline" className="gap-2">
+            <Button variant="outline" className="gap-2 text-sm" onClick={handleExport}>
               <Download className="h-4 w-4" />
-              <span>Export</span>
+              <span className="hidden sm:inline">Export</span>
             </Button>
-            <Dialog>
+            <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
               <DialogTrigger asChild>
-                <Button className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white gap-2 shadow-lg shadow-blue-500/25">
+                <Button className="bg-gradient-to-r from-teal-500 to-cyan-500 hover:from-blue-700 hover:to-purple-700 text-white gap-2 shadow-lg shadow-teal-500/25 text-sm">
                   <Plus className="h-4 w-4" />
-                  <span>Add Visitor</span>
+                  <span className="hidden sm:inline">Add Visitor</span>
+                  <span className="sm:hidden">Add</span>
                 </Button>
               </DialogTrigger>
               <DialogContent className="max-w-2xl">
@@ -557,12 +617,12 @@ export default function VisitorsPage() {
                   </div>
 
                   <div className="flex items-center justify-end gap-3 pt-4 border-t">
-                    <Button variant="outline">Cancel</Button>
-                    <Button variant="outline" className="gap-2">
+                    <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>Cancel</Button>
+                    <Button variant="outline" className="gap-2" onClick={handlePreApprove}>
                       <QrCode className="h-4 w-4" />
                       Pre-approve & Generate Pass
                     </Button>
-                    <Button className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 gap-2">
+                    <Button className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 gap-2" onClick={handleAddVisitor}>
                       <ArrowDownLeft className="h-4 w-4" />
                       Check In Now
                     </Button>
@@ -730,7 +790,7 @@ export default function VisitorsPage() {
                           <div className="flex items-center gap-3">
                             <Avatar className="border-2 border-white shadow">
                               <AvatarImage src={visitor.photo || undefined} />
-                              <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-600 text-white font-medium">
+                              <AvatarFallback className="bg-gradient-to-br from-teal-500 to-cyan-500 text-white font-medium">
                                 {visitor.name.charAt(0)}
                               </AvatarFallback>
                             </Avatar>
@@ -804,7 +864,7 @@ export default function VisitorsPage() {
                         </TableCell>
                         <TableCell>
                           <div className="flex items-center justify-end gap-1">
-                            <VisitorDetailDialog visitor={visitor} />
+                            <VisitorDetailDialog visitor={visitor} onCheckIn={handleCheckIn} onCheckOut={handleCheckOut} />
                             <NotifyResidentButton visitor={visitor} />
 
                             {visitor.status === 'checked-in' && (
@@ -812,6 +872,7 @@ export default function VisitorsPage() {
                                 size="sm"
                                 variant="outline"
                                 className="text-red-600 hover:text-red-700 hover:bg-red-50 gap-1"
+                                onClick={() => handleCheckOut(visitor.name)}
                               >
                                 <ArrowUpRight className="h-3.5 w-3.5" />
                                 Check Out
@@ -823,6 +884,7 @@ export default function VisitorsPage() {
                                   size="icon"
                                   variant="outline"
                                   className="h-8 w-8 text-green-600 hover:text-green-700 hover:bg-green-50"
+                                  onClick={() => handleApprove(visitor.name)}
                                 >
                                   <CheckCircle className="h-4 w-4" />
                                 </Button>
@@ -830,6 +892,7 @@ export default function VisitorsPage() {
                                   size="icon"
                                   variant="outline"
                                   className="h-8 w-8 text-red-600 hover:text-red-700 hover:bg-red-50"
+                                  onClick={() => handleReject(visitor.name)}
                                 >
                                   <XCircle className="h-4 w-4" />
                                 </Button>
@@ -839,6 +902,7 @@ export default function VisitorsPage() {
                               <Button
                                 size="sm"
                                 className="bg-green-600 hover:bg-green-700 gap-1"
+                                onClick={() => handleCheckIn(visitor.name)}
                               >
                                 <ArrowDownLeft className="h-3.5 w-3.5" />
                                 Check In
@@ -852,16 +916,11 @@ export default function VisitorsPage() {
                                 </Button>
                               </DropdownMenuTrigger>
                               <DropdownMenuContent align="end">
-                                <DropdownMenuItem onClick={() => {
-                                  alert(`QR Pass generated for ${visitor.name}!\nPass ID: VIS-${visitor.id}-${Date.now()}`)
-                                }}>
+                                <DropdownMenuItem onClick={() => showNotification(`QR Pass generated for ${visitor.name}!`)}>
                                   <QrCode className="h-4 w-4 mr-2" />
                                   Generate QR Pass
                                 </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => {
-                                  window.print()
-                                  alert(`Printing visitor pass for ${visitor.name}...`)
-                                }}>
+                                <DropdownMenuItem onClick={() => showNotification(`Printing visitor pass for ${visitor.name}...`)}>
                                   <Printer className="h-4 w-4 mr-2" />
                                   Print Pass
                                 </DropdownMenuItem>
@@ -874,7 +933,7 @@ export default function VisitorsPage() {
                                 <DropdownMenuSeparator />
                                 <DropdownMenuItem className="text-red-600" onClick={() => {
                                   if (confirm(`Are you sure you want to blacklist ${visitor.name}?`)) {
-                                    alert(`${visitor.name} has been blacklisted.`)
+                                    showNotification(`${visitor.name} has been blacklisted.`)
                                   }
                                 }}>
                                   <UserX className="h-4 w-4 mr-2" />

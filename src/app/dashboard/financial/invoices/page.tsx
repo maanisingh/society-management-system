@@ -159,7 +159,7 @@ export default function InvoicesPage() {
           </Button>
           <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
             <DialogTrigger asChild>
-              <Button className="bg-gradient-to-r from-blue-600 to-purple-600 text-white space-x-2">
+              <Button className="bg-gradient-to-r from-teal-500 to-cyan-500 text-white space-x-2">
                 <Plus className="h-4 w-4" />
                 <span>Create Invoice</span>
               </Button>

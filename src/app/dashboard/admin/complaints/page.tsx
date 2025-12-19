@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { RoleGuard } from '@/components/auth/role-guard'
 import { useAuthStore } from '@/lib/stores/auth-store'
@@ -34,6 +34,7 @@ import {
   Edit,
   UserPlus,
   History,
+  X,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -242,11 +243,22 @@ const categories = [
   { value: 'other', label: 'Other', icon: AlertCircle },
 ]
 
-function ComplaintDetailDialog({ complaint }: { complaint: typeof complaints[0] }) {
+function ComplaintDetailDialog({ complaint, onResolve, onAssign }: { complaint: typeof complaints[0], onResolve?: (id: string) => void, onAssign?: (id: string) => void }) {
   const CategoryIcon = categoryIcons[complaint.category] || AlertCircle
+  const [isOpen, setIsOpen] = useState(false)
+  const [comment, setComment] = useState('')
+  const [commentSuccess, setCommentSuccess] = useState(false)
+
+  const handleSendComment = () => {
+    if (comment.trim()) {
+      setCommentSuccess(true)
+      setComment('')
+      setTimeout(() => setCommentSuccess(false), 2000)
+    }
+  }
 
   return (
-    <Dialog>
+    <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
         <Button variant="ghost" size="icon" className="h-8 w-8">
           <Eye className="h-4 w-4" />
@@ -296,7 +308,7 @@ function ComplaintDetailDialog({ complaint }: { complaint: typeof complaints[0] 
           <div className="grid grid-cols-2 gap-4">
             <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
               <Avatar className="h-10 w-10">
-                <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-600 text-white">
+                <AvatarFallback className="bg-gradient-to-br from-teal-500 to-cyan-500 text-white">
                   {complaint.reportedBy.charAt(0)}
                 </AvatarFallback>
               </Avatar>
@@ -398,10 +410,23 @@ function ComplaintDetailDialog({ complaint }: { complaint: typeof complaints[0] 
 
           {/* Add Comment */}
           <div className="space-y-2 pt-4 border-t">
-            <h4 className="font-medium">Add Comment</h4>
+            <h4 className="font-medium flex items-center gap-2">
+              Add Comment
+              {commentSuccess && (
+                <span className="text-xs text-green-600 flex items-center gap-1">
+                  <CheckCircle2 className="h-3 w-3" /> Comment added!
+                </span>
+              )}
+            </h4>
             <div className="flex gap-2">
-              <Textarea placeholder="Type your comment..." className="flex-1" rows={2} />
-              <Button className="bg-blue-600 hover:bg-blue-700">
+              <Textarea
+                placeholder="Type your comment..."
+                className="flex-1"
+                rows={2}
+                value={comment}
+                onChange={(e) => setComment(e.target.value)}
+              />
+              <Button className="bg-blue-600 hover:bg-blue-700" onClick={handleSendComment}>
                 <Send className="h-4 w-4" />
               </Button>
             </div>
@@ -411,12 +436,25 @@ function ComplaintDetailDialog({ complaint }: { complaint: typeof complaints[0] 
           {complaint.status !== 'resolved' && (
             <div className="flex gap-2 pt-4 border-t">
               {!complaint.assignedTo && (
-                <Button variant="outline" className="flex-1 gap-2">
+                <Button
+                  variant="outline"
+                  className="flex-1 gap-2"
+                  onClick={() => {
+                    onAssign?.(complaint.id)
+                    setIsOpen(false)
+                  }}
+                >
                   <UserPlus className="h-4 w-4" />
                   Assign
                 </Button>
               )}
-              <Button className="flex-1 gap-2 bg-green-600 hover:bg-green-700">
+              <Button
+                className="flex-1 gap-2 bg-green-600 hover:bg-green-700"
+                onClick={() => {
+                  onResolve?.(complaint.id)
+                  setIsOpen(false)
+                }}
+              >
                 <CheckCircle2 className="h-4 w-4" />
                 Mark as Resolved
               </Button>
@@ -432,9 +470,52 @@ export default function ComplaintsPage() {
   const [searchQuery, setSearchQuery] = useState('')
   const [activeTab, setActiveTab] = useState('all')
   const [categoryFilter, setCategoryFilter] = useState('all')
+  const [isNewComplaintOpen, setIsNewComplaintOpen] = useState(false)
+  const [showSuccess, setShowSuccess] = useState<string | null>(null)
+  const [uploadedImages, setUploadedImages] = useState<string[]>([])
+  const fileInputRef = useRef<HTMLInputElement>(null)
   const { user } = useAuthStore()
   const isAdmin = user?.role === 'admin'
   const isResident = user?.role === 'resident'
+
+  // Show success notification
+  const showNotification = (message: string) => {
+    setShowSuccess(message)
+    setTimeout(() => setShowSuccess(null), 3000)
+  }
+
+  // Handle complaint submission
+  const handleSubmitComplaint = () => {
+    setIsNewComplaintOpen(false)
+    showNotification('Complaint submitted successfully!')
+    setUploadedImages([])
+  }
+
+  // Handle image upload
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files
+    if (files && files.length > 0) {
+      const newImages = Array.from(files).slice(0, 4 - uploadedImages.length).map(file => URL.createObjectURL(file))
+      setUploadedImages(prev => [...prev, ...newImages].slice(0, 4))
+    }
+  }
+
+  // Handle resolve complaint
+  const handleResolve = (complaintId: string) => {
+    showNotification(`Complaint ${complaintId} marked as resolved!`)
+  }
+
+  // Handle assign staff
+  const handleAssign = (complaintId: string) => {
+    showNotification(`Staff assigned to complaint ${complaintId}`)
+  }
+
+  // Handle delete complaint
+  const handleDelete = (complaintId: string) => {
+    if (confirm(`Are you sure you want to delete complaint ${complaintId}?`)) {
+      showNotification(`Complaint ${complaintId} deleted`)
+    }
+  }
 
   const userComplaints = isResident
     ? complaints.filter((c) => c.unit === user?.unit || c.reportedBy === user?.name)
@@ -476,6 +557,21 @@ export default function ComplaintsPage() {
   return (
     <RoleGuard allowedRoles={['admin', 'resident']}>
       <div className="space-y-6">
+        {/* Success Notification */}
+        <AnimatePresence>
+          {showSuccess && (
+            <motion.div
+              initial={{ opacity: 0, y: -50 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -50 }}
+              className="fixed top-4 right-4 z-50 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg flex items-center gap-2"
+            >
+              <CheckCircle2 className="h-5 w-5" />
+              {showSuccess}
+            </motion.div>
+          )}
+        </AnimatePresence>
+
         {/* Header */}
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
           <div>
@@ -496,14 +592,22 @@ export default function ComplaintsPage() {
             </div>
           </div>
 
-          <Dialog>
+          <Dialog open={isNewComplaintOpen} onOpenChange={setIsNewComplaintOpen}>
             <DialogTrigger asChild>
-              <Button className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white gap-2 shadow-lg shadow-blue-500/25">
+              <Button className="bg-gradient-to-r from-teal-500 to-cyan-500 hover:from-blue-700 hover:to-purple-700 text-white gap-2 shadow-lg shadow-teal-500/25">
                 <Plus className="h-4 w-4" />
                 <span>New Complaint</span>
               </Button>
             </DialogTrigger>
             <DialogContent className="max-w-2xl">
+              <input
+                type="file"
+                ref={fileInputRef}
+                className="hidden"
+                accept="image/*"
+                multiple
+                onChange={handleImageUpload}
+              />
               <DialogHeader>
                 <DialogTitle className="flex items-center gap-2">
                   <AlertCircle className="h-5 w-5 text-red-600" />
@@ -594,20 +698,37 @@ export default function ComplaintsPage() {
                 <div className="space-y-2">
                   <Label>Attach Photos</Label>
                   <div className="grid grid-cols-4 gap-3">
-                    <div className="aspect-square rounded-lg border-2 border-dashed border-gray-200 hover:border-blue-400 hover:bg-blue-50 transition-colors cursor-pointer flex flex-col items-center justify-center gap-1">
+                    <div
+                      className="aspect-square rounded-lg border-2 border-dashed border-gray-200 hover:border-blue-400 hover:bg-blue-50 transition-colors cursor-pointer flex flex-col items-center justify-center gap-1"
+                      onClick={() => fileInputRef.current?.click()}
+                    >
                       <Camera className="h-6 w-6 text-gray-400" />
                       <span className="text-xs text-gray-500">Camera</span>
                     </div>
-                    <div className="aspect-square rounded-lg border-2 border-dashed border-gray-200 hover:border-blue-400 hover:bg-blue-50 transition-colors cursor-pointer flex flex-col items-center justify-center gap-1">
+                    <div
+                      className="aspect-square rounded-lg border-2 border-dashed border-gray-200 hover:border-blue-400 hover:bg-blue-50 transition-colors cursor-pointer flex flex-col items-center justify-center gap-1"
+                      onClick={() => fileInputRef.current?.click()}
+                    >
                       <Upload className="h-6 w-6 text-gray-400" />
                       <span className="text-xs text-gray-500">Upload</span>
                     </div>
-                    <div className="aspect-square rounded-lg bg-gray-100 flex items-center justify-center">
-                      <ImageIcon className="h-6 w-6 text-gray-400" />
-                    </div>
-                    <div className="aspect-square rounded-lg bg-gray-100 flex items-center justify-center">
-                      <ImageIcon className="h-6 w-6 text-gray-400" />
-                    </div>
+                    {[0, 1].map((idx) => (
+                      <div key={idx} className="aspect-square rounded-lg bg-gray-100 flex items-center justify-center relative overflow-hidden">
+                        {uploadedImages[idx] ? (
+                          <>
+                            <img src={uploadedImages[idx]} alt={`Upload ${idx + 1}`} className="w-full h-full object-cover" />
+                            <button
+                              className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
+                              onClick={() => setUploadedImages(prev => prev.filter((_, i) => i !== idx))}
+                            >
+                              <X className="h-3 w-3" />
+                            </button>
+                          </>
+                        ) : (
+                          <ImageIcon className="h-6 w-6 text-gray-400" />
+                        )}
+                      </div>
+                    ))}
                   </div>
                   <p className="text-xs text-muted-foreground">
                     Photos help us understand and resolve issues faster. You can attach up to 4 images.
@@ -615,8 +736,11 @@ export default function ComplaintsPage() {
                 </div>
 
                 <div className="flex items-center justify-end gap-3 pt-4 border-t">
-                  <Button variant="outline">Cancel</Button>
-                  <Button className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 gap-2">
+                  <Button variant="outline" onClick={() => setIsNewComplaintOpen(false)}>Cancel</Button>
+                  <Button
+                    className="bg-gradient-to-r from-teal-500 to-cyan-500 hover:from-blue-700 hover:to-purple-700 gap-2"
+                    onClick={handleSubmitComplaint}
+                  >
                     <Send className="h-4 w-4" />
                     Submit Complaint
                   </Button>
@@ -748,6 +872,7 @@ export default function ComplaintsPage() {
               </TabsList>
             </CardHeader>
             <CardContent className="p-0">
+              <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
                   <TableRow className="bg-muted/50 hover:bg-muted/50">
@@ -792,7 +917,7 @@ export default function ComplaintsPage() {
                             <TableCell>
                               <div className="flex items-center gap-2">
                                 <Avatar className="h-8 w-8">
-                                  <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-600 text-white text-xs">
+                                  <AvatarFallback className="bg-gradient-to-br from-teal-500 to-cyan-500 text-white text-xs">
                                     {complaint.reportedBy.charAt(0)}
                                   </AvatarFallback>
                                 </Avatar>
@@ -865,7 +990,12 @@ export default function ComplaintsPage() {
                                   <span className="text-sm">{complaint.assignedTo}</span>
                                 </div>
                               ) : (
-                                <Button variant="ghost" size="sm" className="text-blue-600 gap-1">
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="text-blue-600 gap-1"
+                                  onClick={() => handleAssign(complaint.id)}
+                                >
                                   <UserPlus className="h-3 w-3" />
                                   Assign
                                 </Button>
@@ -874,13 +1004,14 @@ export default function ComplaintsPage() {
                           )}
                           <TableCell>
                             <div className="flex items-center justify-end gap-1">
-                              <ComplaintDetailDialog complaint={complaint} />
+                              <ComplaintDetailDialog complaint={complaint} onResolve={handleResolve} onAssign={handleAssign} />
 
                               {isAdmin && complaint.status !== 'resolved' && (
                                 <Button
                                   size="sm"
                                   variant="outline"
                                   className="text-green-600 hover:text-green-700 hover:bg-green-50 gap-1"
+                                  onClick={() => handleResolve(complaint.id)}
                                 >
                                   <CheckCircle2 className="h-3.5 w-3.5" />
                                   Resolve
@@ -894,28 +1025,28 @@ export default function ComplaintsPage() {
                                   </Button>
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent align="end">
-                                  <DropdownMenuItem>
+                                  <DropdownMenuItem onSelect={() => showNotification(`Viewing details for ${complaint.id}`)}>
                                     <Eye className="h-4 w-4 mr-2" />
                                     View Details
                                   </DropdownMenuItem>
-                                  <DropdownMenuItem>
+                                  <DropdownMenuItem onSelect={() => showNotification(`Comment added to ${complaint.id}`)}>
                                     <MessageSquare className="h-4 w-4 mr-2" />
                                     Add Comment
                                   </DropdownMenuItem>
                                   {isAdmin && (
                                     <>
-                                      <DropdownMenuItem>
+                                      <DropdownMenuItem onSelect={() => handleAssign(complaint.id)}>
                                         <UserPlus className="h-4 w-4 mr-2" />
                                         Assign Staff
                                       </DropdownMenuItem>
-                                      <DropdownMenuItem>
+                                      <DropdownMenuItem onSelect={() => showNotification(`Priority changed for ${complaint.id}`)}>
                                         <Edit className="h-4 w-4 mr-2" />
                                         Change Priority
                                       </DropdownMenuItem>
                                     </>
                                   )}
                                   <DropdownMenuSeparator />
-                                  <DropdownMenuItem className="text-red-600">
+                                  <DropdownMenuItem className="text-red-600" onSelect={() => handleDelete(complaint.id)}>
                                     <Trash2 className="h-4 w-4 mr-2" />
                                     Delete
                                   </DropdownMenuItem>
@@ -929,6 +1060,7 @@ export default function ComplaintsPage() {
                   </AnimatePresence>
                 </TableBody>
               </Table>
+              </div>
 
               {filteredComplaints.length === 0 && (
                 <div className="flex flex-col items-center justify-center py-12 text-center">
