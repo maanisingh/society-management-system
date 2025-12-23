@@ -39,6 +39,7 @@ export default function LoginPage() {
   })
 
   const demoAccounts = [
+    { role: 'Super Admin', email: 'superadmin@society.com', password: 'super123', icon: '👑', color: 'from-purple-500 to-pink-500' },
     { role: 'Admin', email: 'admin@society.com', password: 'admin123', icon: '👨‍💼', color: 'from-teal-500 to-cyan-500' },
     { role: 'Resident', email: 'resident@society.com', password: 'resident123', icon: '🏠', color: 'from-blue-500 to-indigo-500' },
     { role: 'Guard', email: 'guard@society.com', password: 'guard123', icon: '🛡️', color: 'from-orange-500 to-amber-500' },
@@ -56,10 +57,13 @@ export default function LoginPage() {
     // Simulate API call
     setTimeout(() => {
       // Determine role based on email
-      let role: 'admin' | 'resident' | 'guard' = 'admin'
+      let role: 'super_admin' | 'admin' | 'resident' | 'guard' = 'admin'
       let name = 'User'
 
-      if (data.email.includes('admin')) {
+      if (data.email.includes('superadmin')) {
+        role = 'super_admin'
+        name = 'Super Admin'
+      } else if (data.email.includes('admin')) {
         role = 'admin'
         name = 'Admin User'
       } else if (data.email.includes('resident')) {
@@ -259,7 +263,7 @@ export default function LoginPage() {
                     Quick Demo Login
                   </p>
                 </div>
-                <div className="grid grid-cols-3 gap-2">
+                <div className="grid grid-cols-4 gap-2">
                   {demoAccounts.map((account) => (
                     <button
                       key={account.role}

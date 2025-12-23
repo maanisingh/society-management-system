@@ -49,7 +49,7 @@ const allMenuItems = [
     icon: LayoutDashboard,
     href: '/dashboard',
     badge: null,
-    roles: ['admin', 'resident', 'guard'],
+    roles: ['super_admin', 'admin', 'resident', 'guard'],
   },
   {
     title: 'Guard Station',
@@ -74,13 +74,25 @@ const allMenuItems = [
     icon: AlertTriangle,
     href: '/dashboard/sos',
     badge: null,
-    roles: ['admin', 'resident', 'guard'],
+    roles: ['super_admin', 'admin', 'resident', 'guard'],
+  },
+  {
+    title: 'Services',
+    icon: Wrench,
+    href: '/dashboard/services',
+    roles: ['super_admin', 'admin', 'resident'],
+  },
+  {
+    title: 'QR Access',
+    icon: Shield,
+    href: '/dashboard/qr-access',
+    roles: ['super_admin', 'admin', 'resident'],
   },
   {
     title: 'Helpdesk',
     icon: Headphones,
     href: '/dashboard/helpdesk',
-    roles: ['admin', 'resident'],
+    roles: ['super_admin', 'admin', 'resident'],
     submenu: [
       { title: 'Tickets', icon: ClipboardList, href: '/dashboard/helpdesk/tickets' },
       { title: 'Live Chat', icon: MessageCircle, href: '/dashboard/helpdesk/chat' },
@@ -90,7 +102,7 @@ const allMenuItems = [
     title: 'Financial',
     icon: Wallet,
     href: '/dashboard/financial',
-    roles: ['admin'],
+    roles: ['super_admin', 'admin'],
     submenu: [
       { title: 'Billing', icon: FileText, href: '/dashboard/financial/billing' },
       { title: 'Invoices', icon: FileText, href: '/dashboard/financial/invoices' },
@@ -101,7 +113,7 @@ const allMenuItems = [
     title: 'Accounting',
     icon: BookOpen,
     href: '/dashboard/accounting',
-    roles: ['admin'],
+    roles: ['super_admin', 'admin'],
     submenu: [
       { title: 'Income & Expense', icon: TrendingUp, href: '/dashboard/accounting/income-expense' },
       { title: 'General Ledger', icon: BookOpen, href: '/dashboard/accounting/ledger' },
@@ -115,7 +127,7 @@ const allMenuItems = [
     title: 'Purchase',
     icon: ShoppingCart,
     href: '/dashboard/purchase',
-    roles: ['admin'],
+    roles: ['super_admin', 'admin'],
     submenu: [
       { title: 'Purchase Requests', icon: FileText, href: '/dashboard/purchase/requests' },
       { title: 'Purchase Orders', icon: ShoppingCart, href: '/dashboard/purchase/orders' },
@@ -127,7 +139,7 @@ const allMenuItems = [
     icon: Shield,
     href: '/dashboard/security',
     badge: 3,
-    roles: ['admin'],
+    roles: ['super_admin', 'admin'],
     submenu: [
       { title: 'Visitors', icon: Users, href: '/dashboard/security/visitors' },
       { title: 'Vehicles', icon: Package, href: '/dashboard/security/vehicles' },
@@ -138,7 +150,7 @@ const allMenuItems = [
     title: 'Parking',
     icon: Car,
     href: '/dashboard/parking',
-    roles: ['admin'],
+    roles: ['super_admin', 'admin'],
     submenu: [
       { title: 'Slot Management', icon: Car, href: '/dashboard/parking/slots' },
       { title: 'Payments', icon: CreditCard, href: '/dashboard/parking/payments' },
@@ -148,7 +160,7 @@ const allMenuItems = [
     title: 'Staff Management',
     icon: Users,
     href: '/dashboard/staff',
-    roles: ['admin'],
+    roles: ['super_admin', 'admin'],
     submenu: [
       { title: 'Security Guards', icon: Shield, href: '/dashboard/staff/guards' },
       { title: 'Domestic Helpers', icon: Users, href: '/dashboard/staff/maids' },
@@ -158,7 +170,7 @@ const allMenuItems = [
     title: 'Move In/Out',
     icon: Truck,
     href: '/dashboard/move-management',
-    roles: ['admin'],
+    roles: ['super_admin', 'admin'],
   },
   {
     title: 'Community',
@@ -170,6 +182,7 @@ const allMenuItems = [
       { title: 'Amenities', icon: Calendar, href: '/dashboard/residents/amenities' },
       { title: 'Events', icon: Calendar, href: '/dashboard/residents/events' },
       { title: 'Notices', icon: Bell, href: '/dashboard/residents/notices' },
+      { title: 'Facility Requests', icon: Building, href: '/dashboard/facilities/requests' },
     ],
   },
   {
@@ -182,7 +195,7 @@ const allMenuItems = [
     title: 'Residents',
     icon: Users,
     href: '/dashboard/residents',
-    roles: ['admin'],
+    roles: ['super_admin', 'admin'],
     submenu: [
       { title: 'Directory', icon: Users, href: '/dashboard/residents/directory' },
       { title: 'Amenities', icon: Calendar, href: '/dashboard/residents/amenities' },
@@ -194,20 +207,21 @@ const allMenuItems = [
     title: 'Administration',
     icon: Wrench,
     href: '/dashboard/admin',
-    roles: ['admin'],
+    roles: ['super_admin', 'admin'],
     submenu: [
       { title: 'Tenants', icon: UserCheck, href: '/dashboard/admin/tenants' },
       { title: 'Complaints', icon: ClipboardList, href: '/dashboard/admin/complaints' },
       { title: 'Assets', icon: Package, href: '/dashboard/admin/assets' },
       { title: 'Vendors', icon: Users, href: '/dashboard/admin/vendors' },
       { title: 'Defaulters', icon: AlertTriangle, href: '/dashboard/admin/defaulters' },
+      { title: 'Facility Requests', icon: Building, href: '/dashboard/facilities/requests' },
     ],
   },
   {
     title: 'Settings',
     icon: Settings,
     href: '/dashboard/settings',
-    roles: ['admin', 'resident', 'guard'],
+    roles: ['super_admin', 'admin', 'resident', 'guard'],
   },
 ]
 
