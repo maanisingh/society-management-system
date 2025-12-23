@@ -44,6 +44,9 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 
 const allMenuItems = [
+  // ==========================================
+  // SUPER ADMIN ONLY - System Level Operations
+  // ==========================================
   {
     title: 'Dashboard',
     icon: LayoutDashboard,
@@ -51,6 +54,64 @@ const allMenuItems = [
     badge: null,
     roles: ['super_admin', 'admin', 'resident', 'guard'],
   },
+  {
+    title: 'Societies',
+    icon: Building2,
+    href: '/dashboard/super-admin/societies',
+    roles: ['super_admin'],
+    submenu: [
+      { title: 'All Societies', icon: Building2, href: '/dashboard/super-admin/societies' },
+      { title: 'Pending Approvals', icon: ClipboardList, href: '/dashboard/super-admin/societies/pending' },
+      { title: 'Add Society', icon: Building2, href: '/dashboard/super-admin/societies/new' },
+    ],
+  },
+  {
+    title: 'Platform Users',
+    icon: Users,
+    href: '/dashboard/super-admin/users',
+    roles: ['super_admin'],
+    submenu: [
+      { title: 'All Users', icon: Users, href: '/dashboard/super-admin/users' },
+      { title: 'Society Admins', icon: UserCheck, href: '/dashboard/super-admin/users/admins' },
+      { title: 'Access Control', icon: Shield, href: '/dashboard/super-admin/users/access' },
+    ],
+  },
+  {
+    title: 'Platform Billing',
+    icon: CreditCard,
+    href: '/dashboard/super-admin/billing',
+    roles: ['super_admin'],
+    submenu: [
+      { title: 'Subscriptions', icon: CreditCard, href: '/dashboard/super-admin/billing/subscriptions' },
+      { title: 'Invoices', icon: FileText, href: '/dashboard/super-admin/billing/invoices' },
+      { title: 'Revenue Reports', icon: TrendingUp, href: '/dashboard/super-admin/billing/revenue' },
+    ],
+  },
+  {
+    title: 'System Settings',
+    icon: Settings,
+    href: '/dashboard/super-admin/settings',
+    roles: ['super_admin'],
+    submenu: [
+      { title: 'General', icon: Settings, href: '/dashboard/super-admin/settings' },
+      { title: 'Feature Flags', icon: Shield, href: '/dashboard/super-admin/settings/features' },
+    ],
+  },
+  {
+    title: 'Reports & Analytics',
+    icon: TrendingUp,
+    href: '/dashboard/super-admin/reports',
+    roles: ['super_admin'],
+    submenu: [
+      { title: 'Platform Overview', icon: TrendingUp, href: '/dashboard/super-admin/reports' },
+      { title: 'Society Reports', icon: Building2, href: '/dashboard/super-admin/reports/societies' },
+      { title: 'Usage Analytics', icon: TrendingUp, href: '/dashboard/super-admin/reports/usage' },
+    ],
+  },
+
+  // ==========================================
+  // GUARD / SECURITY STAFF
+  // ==========================================
   {
     title: 'Guard Station',
     icon: Shield,
@@ -63,46 +124,58 @@ const allMenuItems = [
       { title: 'Parcels', icon: Package, href: '/dashboard/security/parcels' },
     ],
   },
+
+  // ==========================================
+  // RESIDENT ONLY
+  // ==========================================
   {
     title: 'My Unit',
     icon: Home,
     href: '/dashboard/my-unit',
     roles: ['resident'],
   },
+
+  // ==========================================
+  // SHARED (Admin, Resident, Guard - NOT Super Admin)
+  // ==========================================
   {
     title: 'SOS / Emergency',
     icon: AlertTriangle,
     href: '/dashboard/sos',
     badge: null,
-    roles: ['super_admin', 'admin', 'resident', 'guard'],
+    roles: ['admin', 'resident', 'guard'],
   },
   {
     title: 'Services',
     icon: Wrench,
     href: '/dashboard/services',
-    roles: ['super_admin', 'admin', 'resident'],
+    roles: ['admin', 'resident'],
   },
   {
     title: 'QR Access',
     icon: Shield,
     href: '/dashboard/qr-access',
-    roles: ['super_admin', 'admin', 'resident'],
+    roles: ['admin', 'resident'],
   },
   {
     title: 'Helpdesk',
     icon: Headphones,
     href: '/dashboard/helpdesk',
-    roles: ['super_admin', 'admin', 'resident'],
+    roles: ['admin', 'resident'],
     submenu: [
       { title: 'Tickets', icon: ClipboardList, href: '/dashboard/helpdesk/tickets' },
       { title: 'Live Chat', icon: MessageCircle, href: '/dashboard/helpdesk/chat' },
     ],
   },
+
+  // ==========================================
+  // SOCIETY ADMIN ONLY - Society Level Operations
+  // ==========================================
   {
     title: 'Financial',
     icon: Wallet,
     href: '/dashboard/financial',
-    roles: ['super_admin', 'admin'],
+    roles: ['admin'],
     submenu: [
       { title: 'Billing', icon: FileText, href: '/dashboard/financial/billing' },
       { title: 'Invoices', icon: FileText, href: '/dashboard/financial/invoices' },
@@ -113,7 +186,7 @@ const allMenuItems = [
     title: 'Accounting',
     icon: BookOpen,
     href: '/dashboard/accounting',
-    roles: ['super_admin', 'admin'],
+    roles: ['admin'],
     submenu: [
       { title: 'Income & Expense', icon: TrendingUp, href: '/dashboard/accounting/income-expense' },
       { title: 'General Ledger', icon: BookOpen, href: '/dashboard/accounting/ledger' },
@@ -127,7 +200,7 @@ const allMenuItems = [
     title: 'Purchase',
     icon: ShoppingCart,
     href: '/dashboard/purchase',
-    roles: ['super_admin', 'admin'],
+    roles: ['admin'],
     submenu: [
       { title: 'Purchase Requests', icon: FileText, href: '/dashboard/purchase/requests' },
       { title: 'Purchase Orders', icon: ShoppingCart, href: '/dashboard/purchase/orders' },
@@ -139,7 +212,7 @@ const allMenuItems = [
     icon: Shield,
     href: '/dashboard/security',
     badge: 3,
-    roles: ['super_admin', 'admin'],
+    roles: ['admin'],
     submenu: [
       { title: 'Visitors', icon: Users, href: '/dashboard/security/visitors' },
       { title: 'Vehicles', icon: Package, href: '/dashboard/security/vehicles' },
@@ -150,7 +223,7 @@ const allMenuItems = [
     title: 'Parking',
     icon: Car,
     href: '/dashboard/parking',
-    roles: ['super_admin', 'admin'],
+    roles: ['admin'],
     submenu: [
       { title: 'Slot Management', icon: Car, href: '/dashboard/parking/slots' },
       { title: 'Payments', icon: CreditCard, href: '/dashboard/parking/payments' },
@@ -160,7 +233,7 @@ const allMenuItems = [
     title: 'Staff Management',
     icon: Users,
     href: '/dashboard/staff',
-    roles: ['super_admin', 'admin'],
+    roles: ['admin'],
     submenu: [
       { title: 'Security Guards', icon: Shield, href: '/dashboard/staff/guards' },
       { title: 'Domestic Helpers', icon: Users, href: '/dashboard/staff/maids' },
@@ -170,8 +243,12 @@ const allMenuItems = [
     title: 'Move In/Out',
     icon: Truck,
     href: '/dashboard/move-management',
-    roles: ['super_admin', 'admin'],
+    roles: ['admin'],
   },
+
+  // ==========================================
+  // RESIDENT - Community Features
+  // ==========================================
   {
     title: 'Community',
     icon: Users,
@@ -191,11 +268,15 @@ const allMenuItems = [
     href: '/dashboard/marketplace',
     roles: ['resident'],
   },
+
+  // ==========================================
+  // SOCIETY ADMIN - Resident Management
+  // ==========================================
   {
     title: 'Residents',
     icon: Users,
     href: '/dashboard/residents',
-    roles: ['super_admin', 'admin'],
+    roles: ['admin'],
     submenu: [
       { title: 'Directory', icon: Users, href: '/dashboard/residents/directory' },
       { title: 'Amenities', icon: Calendar, href: '/dashboard/residents/amenities' },
@@ -207,7 +288,7 @@ const allMenuItems = [
     title: 'Administration',
     icon: Wrench,
     href: '/dashboard/admin',
-    roles: ['super_admin', 'admin'],
+    roles: ['admin'],
     submenu: [
       { title: 'Tenants', icon: UserCheck, href: '/dashboard/admin/tenants' },
       { title: 'Complaints', icon: ClipboardList, href: '/dashboard/admin/complaints' },
@@ -217,11 +298,15 @@ const allMenuItems = [
       { title: 'Facility Requests', icon: Building, href: '/dashboard/facilities/requests' },
     ],
   },
+
+  // ==========================================
+  // SETTINGS - Role Specific
+  // ==========================================
   {
     title: 'Settings',
     icon: Settings,
     href: '/dashboard/settings',
-    roles: ['super_admin', 'admin', 'resident', 'guard'],
+    roles: ['admin', 'resident', 'guard'],
   },
 ]
 
@@ -271,7 +356,9 @@ export function Sidebar() {
               <div>
                 <h2 className="text-lg font-bold text-white tracking-wide">ADDA</h2>
                 <p className="text-xs text-teal-300">
-                  {user?.role === 'admin'
+                  {user?.role === 'super_admin'
+                    ? 'Platform Admin'
+                    : user?.role === 'admin'
                     ? 'Community Manager'
                     : user?.role === 'guard'
                     ? 'Gatekeeper'
