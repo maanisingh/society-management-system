@@ -7,7 +7,7 @@ import { AlertTriangle } from 'lucide-react'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 
-type UserRole = 'admin' | 'resident' | 'guard'
+type UserRole = 'super_admin' | 'admin' | 'resident' | 'guard'
 
 interface RoleGuardProps {
   children: React.ReactNode
